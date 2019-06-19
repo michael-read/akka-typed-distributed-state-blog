@@ -1,0 +1,15 @@
+version: '2.2'
+services:
+  cassandra_db:
+    hostname: cassandra-1
+    image: cassandra:latest
+    command: /bin/bash -c "sleep 1 && echo ' -- Pausing to let system catch up ... -->' && /docker-entrypoint.sh cassandra -f"
+    ports:
+    - "7000:7000"
+    - "7001:7001"
+    - "7199:7199"
+    - "9042:9042"
+    - "9160:9160"
+#    volumes:
+#   - ./data/cassandra-1:/var/lib/cassandra:rw
+

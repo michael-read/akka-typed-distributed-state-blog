@@ -1,0 +1,108 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: endpoint
+  namespace: poc
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: ArtifactStateCluster
+        tag: endpoint
+    spec:
+      containers:
+      - env:
+        - name: CASSANDRA_CONTACT_POINT1
+          value: cassandra-db
+        - name: CINNAMON_ELASTIC_HOSTS
+          value: elasticsearch.lightbend:9200
+        - name: CLUSTER_IP
+          value: endpoint
+        - name: CLUSTER_PORT
+          value: "1601"
+        - name: SEED_PORT_1600_TCP_ADDR
+          value: seed
+        image: akka-typed-state-poc/endpoint:0.1.0
+        imagePullPolicy: Never
+        #health
+        livenessProbe:
+          httpGet:
+            path: /alive
+            port: akka-mgmt-http
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: akka-mgmt-http
+        #health
+        name: endpoint
+        ports:
+        - containerPort: 8082
+        # akka remoting
+        - name: remoting
+          containerPort: 2552
+          protocol: TCP
+        # external http
+        - name: akka-mgmt-http
+          containerPort: 8558
+          protocol: TCP
+        resources: {}
+      restartPolicy: Always
+status: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: endpoint
+  namespace: poc
+spec:
+  type: NodePort
+  ports:
+  - name: "8082"
+    protocol: TCP
+    port: 8082
+    targetPort: 8082
+    nodePort: 30082
+#  - name: akka-mgmt-http
+#    protocol: TCP
+#    port: 8558
+#    targetPort: akka-mgmt-http
+#    nodePort: 30558
+  selector:
+    tag: endpoint
+
+---
+#
+# Create a role, `endpoint-reader`, that can list pods and
+# bind the default service account in the `default` namespace
+# to that role.
+#
+
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: endpoint-reader
+  namespace: poc
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: read-endpoints
+  namespace: poc
+subjects:
+# Note the `name` line below. The first default refers to the namespace. The second refers to the service account name.
+# For instance, `name: system:serviceaccount:myns:default` would refer to the default service account in namespace `myns`
+- kind: User
+  name: system:serviceaccount:poc:default
+roleRef:
+  kind: Role
+  name: endpoint-reader
+  apiGroup: rbac.authorization.k8s.io
