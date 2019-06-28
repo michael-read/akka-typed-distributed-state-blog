@@ -99,7 +99,6 @@ Akka cluster / sharding provides:
 - introduces new concepts that may not be well known
 
 Actors can be:
-- susceptible to deadlocks
 - susceptible to overflowing mail boxes
 
 Akka cluster / sharding:
