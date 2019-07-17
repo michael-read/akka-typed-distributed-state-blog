@@ -5,7 +5,7 @@ import sbt.Keys.fork
 import sbt.Resolver
 
 lazy val akkaHttpVersion = "10.1.8"
-lazy val akkaVersion     = "2.5.23"
+lazy val akkaVersion     = "2.6.0-M4"
 lazy val logbackVersion  = "1.2.3"
 lazy val akkaManagementVersion = "1.0.1"
 lazy val akkaCassandraVersion  = "0.98"
@@ -21,6 +21,7 @@ lazy val root = (project in file("."))
   .enablePlugins(JavaAppPackaging)
   .enablePlugins(Cinnamon)  // NOTE: this requires a commercial Lightbend Subscription
   .enablePlugins(MultiJvmPlugin).configs(MultiJvm)
+  .settings(multiJvmSettings: _*)
 //  .enablePlugins(AshScriptPlugin) // since BASH isn't on alpine
   .settings(
 
@@ -28,6 +29,7 @@ lazy val root = (project in file("."))
     dockerBaseImage := "adoptopenjdk/openjdk8",  
     packageName in Docker := "akka-typed-blog-distributed-state/cluster",
     libraryDependencies ++= Seq(
+      // BEGIN: this requires a commercial Lightbend Subscription
       Cinnamon.library.cinnamonAkkaHttp,
       Cinnamon.library.cinnamonAkka,
       Cinnamon.library.cinnamonJvmMetricsProducer,
@@ -37,7 +39,8 @@ lazy val root = (project in file("."))
       Cinnamon.library.cinnamonPrometheus,
       Cinnamon.library.cinnamonPrometheusHttpServer,
       Cinnamon.library.jmxImporter,
-
+      // END: this requires a commercial Lightbend Subscription
+      
       "com.typesafe.akka" %% "akka-remote" % akkaVersion,
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
 
@@ -67,9 +70,11 @@ lazy val root = (project in file("."))
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
-
+//      "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion % Test,
+      "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
+      
       "commons-io" % "commons-io" % "2.4" % Test,
-      "org.scalatest" %% "scalatest" % "3.0.1" % Test
+      "org.scalatest" %% "scalatest" % "3.0.8" % Test
 
     ),
     javaOptions in Universal ++= Seq(

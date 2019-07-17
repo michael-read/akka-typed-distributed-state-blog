@@ -101,7 +101,8 @@ object StartNode {
         val TypeKey = EntityTypeKey[ArtifactCommand](ARTIFACTSTATES_SHARDNAME)
         val artifactActorSupervisor: ActorRef[ShardingEnvelope[ArtifactCommand]] =
           ClusterSharding(context.system).init(Entity(typeKey = TypeKey,
-            createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId)))
+            createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId))
+            .withSettings(ClusterShardingSettings(context.system).withRole("sharded")))
 
         Behaviors.receiveSignal {
           case (_, Terminated(_)) =>
@@ -138,8 +139,7 @@ object StartNode {
         val TypeKey = EntityTypeKey[ArtifactCommand](ARTIFACTSTATES_SHARDNAME)
         val psEntities: ActorRef[ShardingEnvelope[ArtifactCommand]] =
           ClusterSharding(context.system).init(Entity(typeKey = TypeKey,
-            createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId))
-            .withSettings(ClusterShardingSettings(context.system).withRole("sharded")))
+            createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId)))
 
         var psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]] = psEntities
 
