@@ -1,34 +1,29 @@
 package com.mread.artifactstate.tests
 
-import java.io.File
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.server.Route
 
 import akka.actor.testkit.typed.scaladsl.TestProbe
-import akka.actor.{ActorIdentity, Identify, Props}
-import akka.actor.typed.{ActorRef, ActorSystem}
+import akka.actor.typed.ActorRef
 
 import scala.concurrent.duration._
 import akka.actor.typed.scaladsl.adapter._
 import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.cluster.typed.{Join, MultiNodeTypedClusterSpec}
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.server.Route
 import akka.persistence.Persistence
 import akka.remote.testconductor.RoleName
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
-import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
 import com.lightbend.artifactstate.actors.ArtifactStateEntityActor
 import com.lightbend.artifactstate.actors.ArtifactStateEntityActor.{ARTIFACTSTATES_SHARDNAME, AllStates, ArtifactCommand, ArtifactResponse, CmdArtifactAddedToUserFeed, CmdArtifactRead, CmdArtifactRemovedFromUserFeed, QryGetAllStates}
 import com.lightbend.artifactstate.endpoint.ArtifactStateRoutes
 import com.typesafe.config.ConfigFactory
-import org.apache.commons.io.FileUtils
 import org.scalatest.concurrent.ScalaFutures
 import com.lightbend.artifactstate.endpoint.ArtifactStatePocAPI.ArtifactAndUser
 
 object ArtifactStatesSpec extends MultiNodeConfig {
   val endpointTest = role("endpointTest")
-  val dbNode = role("dbnode")
   val persistNode1 = role("persist1")
   val persistNode2 = role("persist2")
 
@@ -69,7 +64,6 @@ object ArtifactStatesSpec extends MultiNodeConfig {
 class PSSpecMultiJvmNode1 extends ArtifactStatesSpec
 class PSSpecMultiJvmNode2 extends ArtifactStatesSpec
 class PSSpecMultiJvmNode3 extends ArtifactStatesSpec
-class PSSpecMultiJvmNode4 extends ArtifactStatesSpec
 
 class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
   with ImplicitSender with MultiNodeTypedClusterSpec {
@@ -82,43 +76,21 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
   import akka.http.scaladsl.testkit.TestFrameworkInterface
   import akka.http.scaladsl.model._
 
-  abstract class RouteTesting(actorsystem: ActorSystem[Nothing], psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]]) extends ArtifactStateRoutes(actorsystem, psCommandActor) with RouteTest with TestFrameworkInterface
+  abstract class RouteTesting(psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]]) extends ArtifactStateRoutes(typedSystem, psCommandActor) with RouteTest with TestFrameworkInterface
     with ScalaFutures with ScalatestUtils {
 
-    override protected def createActorSystem(): akka.actor.ActorSystem = actorsystem.toUntyped
+    override protected def createActorSystem(): akka.actor.ActorSystem = typedSystem.toUntyped
     override def failTest(msg: String): Nothing = throw new TestFailedException(msg, 11)
-
-//    override val psQueryActor: ActorRef = region
-//    override val psCommandActor: ActorRef = region
 
     lazy val routes: Route = psRoutes
   }
-
-  // def initialParticipants = roles.size
-/*
-  val storageLocations = List(
-    "akka.persistence.journal.leveldb.dir",
-    "akka.persistence.journal.leveldb-shared.store.dir",
-    "akka.persistence.snapshot-store.local.dir").map(s => new File(system.settings.config.getString(s)))
-
-  override protected def atStartup() {
-    runOn(dbNode) {
-      storageLocations.foreach(dir => FileUtils.deleteDirectory(dir))
-    }
-  }
-
-  override protected def afterTermination() {
-    runOn(dbNode) {
-      storageLocations.foreach(dir => FileUtils.deleteDirectory(dir))
-    }
-  }*/
 
   def join(from: RoleName, to: RoleName): Unit = {
     runOn(from) {
 
       cluster.manager ! Join(node(to).address)
 
-//      startPersistentSharding()
+      startPersistentSharding()
     }
     enterBarrier(from.name + "-joined")
   }
@@ -143,29 +115,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
   val artifactMember = ArtifactAndUser(1l, "Mike")
 
   "Sharded ArtifactState app" must {
-/*
 
-    "setup shared journal" in within(20.seconds) {
-      // start the Persistence extension
-      Persistence(system)
-/*
-      runOn(dbNode) {
-        system.actorOf(Props[SharedLeveldbStore], "store")
-      }
-*/
-      enterBarrier("peristence-started")
-/*
-      runOn(persistNode1, persistNode2) {
-        system.actorSelection(node(dbNode) / "user" / "store") ! Identify(None)
-        val sharedStore = expectMsgType[ActorIdentity].ref.get
-        SharedLeveldbJournal.setStore(sharedStore, system)
-      }
-*/
-
-      enterBarrier("after-1")
-    }
-
-*/
     "join cluster" in within(20.seconds) {
       Persistence(system) // start the Persistence extension
       join(persistNode1, persistNode1) // join myself
@@ -196,7 +146,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
     "edit and retrieve Artifact State" in within(15.seconds) {
 
-      runOn(persistNode1) {
+      runOn(persistNode2) {
         val region = startProxySharding()
         region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRemovedFromUserFeed(artifactMember.artifactId, artifactMember.userId))
         awaitAssert {
@@ -213,13 +163,13 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
     // these tests use the Akka RouteTesting facility to test Akka HTTP Endpoint
     
     // test artifact read state
-/*
+
     "set artifact read state (POST)" in within(15 seconds) {
       runOn(endpointTest) {
 
         val region = startProxySharding()
 
-        new RouteTesting(system.toTyped, region) {
+        new RouteTesting(region) {
 
           // test setting artifactstate
           val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
@@ -249,7 +199,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new RouteTesting(system.toTyped, region) {
+        new RouteTesting(region) {
 
           // test retrieve of new state
           val request2 = Get("/artifactState/isArtifactReadByUser?artifactId=1&userId=Mike")
@@ -261,7 +211,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
             contentType should ===(ContentTypes.`application/json`)
 
             // and no entries should be in the list:
-            entityAs[String] should ===("""{"artifactId":1,"userId":"Mike","answer":true}""")
+            entityAs[String] should ===("""{"answer":true,"artifactId":1,"userId":"Mike"}""")
           }
 
         }
@@ -280,7 +230,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
         // You have to use such new RouteTesting { } block around the routing test code
 
-        new RouteTesting(system.toTyped, region) {
+        new RouteTesting(region) {
 
           val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
 
@@ -293,7 +243,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
             contentType should ===(ContentTypes.`application/json`)
 
             // and no entries should be in the list:
-            entityAs[String] should ===("""{"artifactId":1,"userId":"Mike","answer":true}""")
+            entityAs[String] should ===("""{"answer":true,"artifactId":1,"userId":"Mike"}""")
           }
 
         }
@@ -310,7 +260,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new RouteTesting(system.toTyped, region) {
+        new RouteTesting(region) {
 
           // test setting memberfeed
           val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
@@ -340,7 +290,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new RouteTesting(system.toTyped, region) {
+        new RouteTesting(region) {
 
           // test retrieve of new state
           val request2 = Get("/artifactState/isArtifactInUserFeed?artifactId=1&userId=Mike")
@@ -352,7 +302,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
             contentType should ===(ContentTypes.`application/json`)
 
             // and no entries should be in the list:
-            entityAs[String] should ===("""{"artifactId":1,"userId":"Mike","answer":true}""")
+            entityAs[String] should ===("""{"answer":true,"artifactId":1,"userId":"Mike"}""")
           }
 
         }
@@ -367,7 +317,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new RouteTesting(system.toTyped, region) {
+        new RouteTesting(region) {
 
           val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
 
@@ -380,7 +330,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
             contentType should ===(ContentTypes.`application/json`)
 
             // and no entries should be in the list:
-            entityAs[String] should ===("""{"artifactId":1,"userId":"Mike","answer":true}""")
+            entityAs[String] should ===("""{"answer":true,"artifactId":1,"userId":"Mike"}""")
           }
 
         }
@@ -395,7 +345,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new RouteTesting(system.toTyped, region) {
+        new RouteTesting(region) {
 
           // test setting memberfeed
           val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
@@ -426,7 +376,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new RouteTesting(system.toTyped, region) {
+        new RouteTesting(region) {
 
           // test retrieve of new state
           val request2 = Get("/artifactState/isArtifactInUserFeed?artifactId=1&userId=Mike")
@@ -438,7 +388,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
             contentType should ===(ContentTypes.`application/json`)
 
             // and no entries should be in the list:
-            entityAs[String] should ===("""{"artifactId":1,"userId":"Mike","answer":false}""")
+            entityAs[String] should ===("""{"answer":false,"artifactId":1,"userId":"Mike"}""")
           }
 
         }
@@ -456,7 +406,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new RouteTesting(system.toTyped, region) {
+        new RouteTesting(region) {
 
           // test retrieve of new state
           val request2 = Get("/artifactState/getAllStates?artifactId=1&userId=Mike")
@@ -468,7 +418,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
             contentType should ===(ContentTypes.`application/json`)
 
             // and no entries should be in the list:
-            entityAs[String] should ===("""{"artifactId":1,"userId":"Mike","artifactRead":true,"artifactInUserFeed":false}""")
+            entityAs[String] should ===("""{"artifactId":1,"artifactInUserFeed":false,"artifactRead":true,"userId":"Mike"}""")
           }
 
         }
@@ -486,7 +436,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         // this will only run on the 'first' node
 
         // You have to use such new RouteTesting { } block around the routing test code
-        new RouteTesting(system.toTyped, region) {
+        new RouteTesting(region) {
 
           val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
 
@@ -499,7 +449,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
             contentType should ===(ContentTypes.`application/json`)
 
             // and no entries should be in the list:
-            entityAs[String] should ===("""{"artifactId":1,"userId":"Mike","artifactRead":true,"artifactInUserFeed":false}""")
+            entityAs[String] should ===("""{"artifactId":1,"artifactInUserFeed":false,"artifactRead":true,"userId":"Mike"}""")
           }
 
         }
@@ -509,7 +459,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       // use barrier to coordinate test steps
       testConductor.enter("endpointTest-memberfeed-post-read")
     }
-*/
+
   }
 
 }
