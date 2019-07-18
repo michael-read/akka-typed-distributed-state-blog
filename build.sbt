@@ -4,7 +4,7 @@ import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 import sbt.Keys.fork
 import sbt.Resolver
 
-lazy val akkaHttpVersion = "10.1.8"
+lazy val akkaHttpVersion = "10.1.9"
 lazy val akkaVersion     = "2.6.0-M4"
 lazy val logbackVersion  = "1.2.3"
 lazy val akkaManagementVersion = "1.0.1"
@@ -22,10 +22,7 @@ lazy val root = (project in file("."))
   .enablePlugins(Cinnamon)  // NOTE: this requires a commercial Lightbend Subscription
   .enablePlugins(MultiJvmPlugin).configs(MultiJvm)
   .settings(multiJvmSettings: _*)
-//  .enablePlugins(AshScriptPlugin) // since BASH isn't on alpine
   .settings(
-
-//    dockerBaseImage := "openjdk:8-jre-alpine",
     dockerBaseImage := "adoptopenjdk/openjdk8",  
     packageName in Docker := "akka-typed-blog-distributed-state/cluster",
     libraryDependencies ++= Seq(
