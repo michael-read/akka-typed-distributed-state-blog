@@ -28,7 +28,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
       case ArtifactInUserFeed(artifactInUserFeed) =>
         ExtResponse(req.artifactId, req.userId, Some(artifactInUserFeed), None)
       case _ =>
-        ExtResponse(req.artifactId, req.userId, None, Some("Internal Error: this shouldn't happen."))
+        ExtResponse(req.artifactId, req.userId, None, Some("Internal Query Error: this shouldn't happen."))
     }.recover {
       case ex: Exception =>
         system.log.error(ex, ex.getMessage)
@@ -66,6 +66,39 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
     }
   }
 
+  def handleCmdResponse(req: ArtifactAndUser, f: Future[ArtifactResponse])(implicit ec: ExecutionContext): Future[String] = {
+    f.map {
+      case Okay(result) => result
+      case _ =>
+        "Internal Command Error: this shouldn't happen."
+    }.recover {
+      case ex: Exception =>
+        system.log.error(ex, ex.getMessage)
+        ex.getMessage
+    }
+  }
+
+  def cmdArtifactRead(req: ArtifactAndUser)(implicit ec: ExecutionContext): Future[String] = {
+    val result = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
+      ShardingEnvelope(req.userId, CmdArtifactRead(ref, req.artifactId, req.userId))
+    }.mapTo[ArtifactResponse]
+    handleCmdResponse(req, result)
+  }
+
+  def cmdArtifactAddedToUserFeed(req: ArtifactAndUser)(implicit ec: ExecutionContext): Future[String] = {
+    val result = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
+      ShardingEnvelope(req.userId, CmdArtifactAddedToUserFeed(ref, req.artifactId, req.userId))
+    }.mapTo[ArtifactResponse]
+    handleCmdResponse(req, result)
+  }
+
+  def cmdArtifactRemovedFromUserFeed(req: ArtifactAndUser)(implicit ec: ExecutionContext): Future[String] = {
+    val result = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
+      ShardingEnvelope(req.userId, CmdArtifactRemovedFromUserFeed(ref, req.artifactId, req.userId))
+    }.mapTo[ArtifactResponse]
+    handleCmdResponse(req, result)
+  }
+
   implicit def myExceptionHandler: ExceptionHandler =
     ExceptionHandler {
       case ex: Exception =>
@@ -92,7 +125,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
               },
               post {
                 entity(as[ArtifactAndUser]) { req =>
-                  complete(StatusCodes.OK, queryArtifactRead(ArtifactAndUser(req.artifactId, req.userId)))
+                  complete(StatusCodes.OK, queryArtifactRead(req))
                 }
               })
           }
@@ -108,7 +141,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
               },
               post {
                 entity(as[ArtifactAndUser]) { req =>
-                  complete(StatusCodes.OK, queryArtifactInUserFeed(ArtifactAndUser(req.artifactId, req.userId)))
+                  complete(StatusCodes.OK, queryArtifactInUserFeed(req))
                 }
               })
           }
@@ -124,7 +157,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
               },
               post {
                 entity(as[ArtifactAndUser]) { req =>
-                  complete(StatusCodes.OK, queryAllStates(ArtifactAndUser(req.artifactId, req.userId)))
+                  complete(StatusCodes.OK, queryAllStates(req))
                 }
               })
           }
@@ -132,29 +165,35 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
 
         // COMMANDS:
         pathPrefix("setArtifactReadByUser") {
-          post {
-            entity(as[ArtifactAndUser]) { req =>
-              // fire and forget
-              psCommandActor ! ShardingEnvelope(req.userId, CmdArtifactRead(req.artifactId, req.userId))
-              complete(StatusCodes.OK, req)
+          extractExecutionContext { implicit executor =>
+            post {
+              entity(as[ArtifactAndUser]) { req =>
+                complete {
+                  cmdArtifactRead(req)
+                }
+              }
             }
           }
         },
         pathPrefix("setArtifactAddedToUserFeed") {
-          post {
-            entity(as[ArtifactAndUser]) { req =>
-              // fire and forget
-              psCommandActor ! ShardingEnvelope(req.userId, CmdArtifactAddedToUserFeed(req.artifactId, req.userId))
-              complete(StatusCodes.OK, req)
+          extractExecutionContext { implicit executor =>
+            post {
+              entity(as[ArtifactAndUser]) { req =>
+                complete {
+                  cmdArtifactAddedToUserFeed(req)
+                }
+              }
             }
           }
         },
         pathPrefix("setArtifactRemovedFromUserFeed") {
-          post {
-            entity(as[ArtifactAndUser]) { req =>
-              // fire and forget
-              psCommandActor ! ShardingEnvelope(req.userId, CmdArtifactRemovedFromUserFeed(req.artifactId, req.userId))
-              complete(StatusCodes.OK, req)
+          extractExecutionContext { implicit executor =>
+            post {
+              entity(as[ArtifactAndUser]) { req =>
+                complete {
+                  cmdArtifactRemovedFromUserFeed(req)
+                }
+              }
             }
           }
         })
