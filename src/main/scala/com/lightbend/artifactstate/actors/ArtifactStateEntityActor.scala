@@ -72,15 +72,15 @@ object ArtifactStateEntityActor {
   }
 
   private def artifactRead(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
-    Effect.persist(ArtifactRead()).thenRun(state => replyTo ! Okay())
+    Effect.persist(ArtifactRead()).thenRun(_ => replyTo ! Okay())
   }
 
   private def artifactAddedToUserFeed(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
-    Effect.persist(ArtifactAddedToUserFeed()).thenRun(state => replyTo ! Okay())
+    Effect.persist(ArtifactAddedToUserFeed()).thenRun(_ => replyTo ! Okay())
   }
 
   private def artifactRemovedFromUserFeed(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
-    Effect.persist(ArtifactRemovedFromUserFeed()).thenRun(state => replyTo ! Okay())
+    Effect.persist(ArtifactRemovedFromUserFeed()).thenRun(_ => replyTo ! Okay())
   }
 
   private def getArtifactRead(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
