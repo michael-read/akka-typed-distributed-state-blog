@@ -139,7 +139,7 @@ object StartNode {
         val psEntities: ActorRef[ShardingEnvelope[ArtifactCommand]] =
           ClusterSharding(context.system).init(Entity(typeKey = TypeKey,
             createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId))
-            .withSettings(ClusterShardingSettings(context.system).withRole("sharded")))
+            .withSettings(ClusterShardingSettings(context.system)))
 
         var psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]] = psEntities
 
