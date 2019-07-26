@@ -25,11 +25,12 @@ object ArtifactStateEntityActor {
   final case class QryGetAllStates(replyTo: ActorRef[ArtifactResponse], artifactId: Long, userId: String) extends ArtifactCommand
 
   // commands
-  final case class CmdArtifactRead(artifactId: Long, userId: String) extends ArtifactCommand
-  final case class CmdArtifactAddedToUserFeed(artifactId: Long, userId: String) extends ArtifactCommand
-  final case class CmdArtifactRemovedFromUserFeed(artifactId: Long, userId: String) extends ArtifactCommand
+  final case class CmdArtifactRead(replyTo: ActorRef[ArtifactResponse], artifactId: Long, userId: String) extends ArtifactCommand
+  final case class CmdArtifactAddedToUserFeed(replyTo: ActorRef[ArtifactResponse], artifactId: Long, userId: String) extends ArtifactCommand
+  final case class CmdArtifactRemovedFromUserFeed(replyTo: ActorRef[ArtifactResponse], artifactId: Long, userId: String) extends ArtifactCommand
 
   // responses
+  final case class Okay(okay: String = "OK") extends ArtifactResponse
   final case class ArtifactReadByUser(artifactRead: Boolean) extends ArtifactResponse
   final case class ArtifactInUserFeed(artifactInUserFeed: Boolean) extends ArtifactResponse
   final case class AllStates(artifactRead: Boolean, artifactInUserFeed: Boolean) extends ArtifactResponse
@@ -54,9 +55,9 @@ object ArtifactStateEntityActor {
     state match {
       case currState: CurrState =>
         command match {
-          case cmd@CmdArtifactRead (artifactId, userId) => artifactRead(cmd)
-          case cmd@CmdArtifactAddedToUserFeed (artifactId, userId) => artifactAddedToUserFeed(cmd)
-          case cmd@CmdArtifactRemovedFromUserFeed (artifactId, userId) => artifactRemovedFromUserFeed(cmd)
+          case cmd@CmdArtifactRead (replyTo, artifactId, userId) => artifactRead(replyTo, currState)
+          case cmd@CmdArtifactAddedToUserFeed (replyTo, artifactId, userId) => artifactAddedToUserFeed(replyTo, currState)
+          case cmd@CmdArtifactRemovedFromUserFeed (replyTo, artifactId, userId) => artifactRemovedFromUserFeed(replyTo, currState)
 
           case QryArtifactReadByUser (replyTo, artifactId, userId) => getArtifactRead(replyTo, currState)
           case QryArtifactInUserFeed (replyTo, artifactId, userId) => getAritfactInFeed (replyTo, currState)
@@ -70,16 +71,16 @@ object ArtifactStateEntityActor {
     }
   }
 
-  private def artifactRead(cmd: ArtifactCommand): Effect[ArtifactEvent, ArtifactState] = {
-    Effect.persist(ArtifactRead())
+  private def artifactRead(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
+    Effect.persist(ArtifactRead()).thenRun(_ => replyTo ! Okay())
   }
 
-  private def artifactAddedToUserFeed(cmd: ArtifactCommand): Effect[ArtifactEvent, ArtifactState] = {
-    Effect.persist(ArtifactAddedToUserFeed())
+  private def artifactAddedToUserFeed(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
+    Effect.persist(ArtifactAddedToUserFeed()).thenRun(_ => replyTo ! Okay())
   }
 
-  private def artifactRemovedFromUserFeed(cmd: ArtifactCommand): Effect[ArtifactEvent, ArtifactState] = {
-    Effect.persist(ArtifactRemovedFromUserFeed())
+  private def artifactRemovedFromUserFeed(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
+    Effect.persist(ArtifactRemovedFromUserFeed()).thenRun(_ => replyTo ! Okay())
   }
 
   private def getArtifactRead(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {

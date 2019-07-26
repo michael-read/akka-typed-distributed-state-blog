@@ -5,7 +5,7 @@ import sbt.Keys.fork
 import sbt.Resolver
 
 lazy val akkaHttpVersion = "10.1.9"
-lazy val akkaVersion     = "2.6.0-M4"
+lazy val akkaVersion     = "2.6.0-M5"
 lazy val logbackVersion  = "1.2.3"
 lazy val akkaManagementVersion = "1.0.1"
 lazy val akkaCassandraVersion  = "0.98"
@@ -50,8 +50,9 @@ lazy val root = (project in file("."))
       "com.typesafe.akka" %% "akka-persistence-cassandra" % akkaCassandraVersion,
       "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion,
       "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
+      "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
+  
       "com.lightbend.akka" %% "akka-diagnostics" % "1.1.9",
-
       "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % akkaManagementVersion,
       "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % akkaManagementVersion,
       "com.lightbend.akka.management" %% "akka-management-cluster-http" % akkaManagementVersion,
