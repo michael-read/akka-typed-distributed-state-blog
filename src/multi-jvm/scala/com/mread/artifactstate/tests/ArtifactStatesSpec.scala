@@ -2,7 +2,6 @@ package com.mread.artifactstate.tests
 
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.server.Route
-
 import akka.actor.testkit.typed.scaladsl.TestProbe
 import akka.actor.typed.ActorRef
 
@@ -16,7 +15,7 @@ import akka.remote.testconductor.RoleName
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.ImplicitSender
 import com.lightbend.artifactstate.actors.ArtifactStateEntityActor
-import com.lightbend.artifactstate.actors.ArtifactStateEntityActor.{ARTIFACTSTATES_SHARDNAME, AllStates, ArtifactCommand, ArtifactResponse, CmdArtifactAddedToUserFeed, CmdArtifactRead, CmdArtifactRemovedFromUserFeed, QryGetAllStates}
+import com.lightbend.artifactstate.actors.ArtifactStateEntityActor.{ARTIFACTSTATES_SHARDNAME, AllStates, ArtifactCommand, ArtifactResponse, CmdArtifactAddedToUserFeed, CmdArtifactRead, CmdArtifactRemovedFromUserFeed, Okay, QryGetAllStates}
 import com.lightbend.artifactstate.endpoint.ArtifactStateRoutes
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -47,6 +46,7 @@ object ArtifactStatesSpec extends MultiNodeConfig {
     }
     akka.actor.serialization-bindings {
       "com.lightbend.artifactstate.serializer.EventSerializeMarker" = myjson
+      "com.lightbend.artifactstate.serializer.MsgSerializeMarker" = jackson-json
     }
     akka.persistence {
       journal.plugin = "cassandra-journal"
@@ -126,21 +126,43 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
     // these tests test state directly against the cluster
 
-    "create, and retrieve Artifact State" in within(15.seconds) {
+    "set artifact read" in within (10.seconds) {
+      awaitAssert {
+        within(10.second) {
+          val region = startProxySharding()
+          val probe = TestProbe[ArtifactResponse]
+          region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRead(probe.ref, artifactMember.artifactId, artifactMember.userId))
+          probe.expectMessage(Okay("OK"))
+        }
+      }
+      enterBarrier("after set artifact read")
+    }
 
+    "set artifact added to user feed" in within (10.seconds) {
+      awaitAssert {
+        within(10.second) {
+          val region = startProxySharding()
+          val probe = TestProbe[ArtifactResponse]
+          region ! ShardingEnvelope(artifactMember.userId, CmdArtifactAddedToUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
+          probe.expectMessage(Okay("OK"))
+        }
+      }
+      enterBarrier("after added to user feed")
+    }
+
+    "create, and retrieve Artifact State" in within(15.seconds) {
       runOn(persistNode1) {
         val region = startProxySharding()
-        region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRead(artifactMember.artifactId, artifactMember.userId))
-        region ! ShardingEnvelope(artifactMember.userId, CmdArtifactAddedToUserFeed(artifactMember.artifactId, artifactMember.userId))
+        val probe = TestProbe[ArtifactResponse]
+        region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRead(probe.ref, artifactMember.artifactId, artifactMember.userId))
+        region ! ShardingEnvelope(artifactMember.userId, CmdArtifactAddedToUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
         awaitAssert {
           within(10.second) {
-            val probe = TestProbe[ArtifactResponse]
             region ! ShardingEnvelope(artifactMember.userId, QryGetAllStates(probe.ref, artifactMember.artifactId, artifactMember.userId))
             probe.expectMessage(AllStates(artifactRead = true, artifactInUserFeed = true))
           }
         }
       }
-
       enterBarrier("after create, and retrieve Artifact State")
     }
 
@@ -148,10 +170,10 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
       runOn(persistNode2) {
         val region = startProxySharding()
-        region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRemovedFromUserFeed(artifactMember.artifactId, artifactMember.userId))
+        val probe = TestProbe[ArtifactResponse]
+        region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRemovedFromUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
         awaitAssert {
           within(10.second) {
-            val probe = TestProbe[ArtifactResponse]
             region ! ShardingEnvelope(artifactMember.userId, QryGetAllStates(probe.ref, artifactMember.artifactId, artifactMember.userId))
             probe.expectMessage(AllStates(artifactRead = true, artifactInUserFeed = false))
           }
@@ -184,15 +206,14 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
             contentType should ===(ContentTypes.`application/json`)
 
             // and we know what message we're expecting back:
-            entityAs[String] should ===("""{"artifactId":1,"userId":"Mike"}""")
+            entityAs[String] should ===("""{"success":true}""")
           }
 
         }
       }
-
       // this will run on all nodes
       // use barrier to coordinate test steps
-      testConductor.enter("endpointTest-artifactstate-set")
+      enterBarrier("after set artifact read state (POST)" )
     }
 
     "validate that the artifact state is read (GET)" in within(15 seconds) {
@@ -219,7 +240,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
       // this will run on all nodes
       // use barrier to coordinate test steps
-      testConductor.enter("endpointTest-artifactstate-get-read")
+      enterBarrier("after validate that the artifact state is read (GET)" )
     }
 
     "validate that the artifact state is read (POST)" in within(15 seconds) {
@@ -251,7 +272,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
       // this will run on all nodes
       // use barrier to coordinate test steps
-      testConductor.enter("endpointTest-artifactstate-post-read")
+      enterBarrier("after validate that the artifact state is read (POST)" )
     }
 
     // artifact / member feed tests
@@ -275,7 +296,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
             contentType should ===(ContentTypes.`application/json`)
 
             // and we know what message we're expecting back:
-            entityAs[String] should ===("""{"artifactId":1,"userId":"Mike"}""")
+            entityAs[String] should ===("""{"success":true}""")
           }
 
         }
@@ -283,7 +304,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
       // this will run on all nodes
       // use barrier to coordinate test steps
-      testConductor.enter("endpointTest-memberfeed-set")
+      enterBarrier("after set artifact in member feed (POST)" )
     }
 
     "validate that the artifact / member feed is read (GET)" in within(15 seconds) {
@@ -310,7 +331,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
       // this will run on all nodes
       // use barrier to coordinate test steps
-      testConductor.enter("endpointTest-memberfeed-get-read")
+      enterBarrier("after validate that the artifact / member feed is read (GET)" )
     }
 
     "validate that the artifact is in member feed (POST)" in within(15 seconds) {
@@ -338,7 +359,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
       // this will run on all nodes
       // use barrier to coordinate test steps
-      testConductor.enter("endpointTest-memberfeed-post-read")
+      enterBarrier("after validate that the artifact is in member feed (POST)" )
     }
 
     "remove artifact from member feed (POST)" in within(15 seconds) {
@@ -360,7 +381,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
             contentType should ===(ContentTypes.`application/json`)
 
             // and we know what message we're expecting back:
-            entityAs[String] should ===("""{"artifactId":1,"userId":"Mike"}""")
+            entityAs[String] should ===("""{"success":true}""")
           }
 
         }
@@ -368,8 +389,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
       // this will run on all nodes
       // use barrier to coordinate test steps
-      testConductor.enter("endpointTest-memberfeed-post-read")
-
+      enterBarrier("after remove artifact from member feed (POST)" )
     }
 
     "validate that the artifact has been removed from member feed (GET)" in within(15 seconds) {
@@ -396,7 +416,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
       // this will run on all nodes
       // use barrier to coordinate test steps
-      testConductor.enter("endpointTest-memberfeed-get-read-II")
+      enterBarrier("after validate that the artifact has been removed from member feed (GET)" )
 
     }
 
@@ -426,7 +446,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
       // this will run on all nodes
       // use barrier to coordinate test steps
-      testConductor.enter("endpointTest-memberfeed-get-read")
+      enterBarrier("after validate getAllStates (artifactRead: true, artifactInFeed: false (GET)" )
     }
 
     "validate getAllStates (artifactRead: true, artifactInFeed: false (POST)" in within(15 seconds) {
@@ -457,7 +477,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
       // this will run on all nodes
       // use barrier to coordinate test steps
-      testConductor.enter("endpointTest-memberfeed-post-read")
+      enterBarrier("after validate getAllStates (artifactRead: true, artifactInFeed: false (POST)" )
     }
 
   }

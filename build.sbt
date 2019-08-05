@@ -51,7 +51,7 @@ lazy val root = (project in file("."))
       "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion,
       "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
       "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
-  
+
       "com.lightbend.akka" %% "akka-diagnostics" % "1.1.9",
       "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % akkaManagementVersion,
       "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % akkaManagementVersion,

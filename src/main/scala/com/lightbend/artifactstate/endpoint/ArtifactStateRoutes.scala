@@ -66,33 +66,35 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
     }
   }
 
-  def handleCmdResponse(req: ArtifactAndUser, f: Future[ArtifactResponse])(implicit ec: ExecutionContext): Future[String] = {
+  def handleCmdResponse(req: ArtifactAndUser, f: Future[ArtifactResponse])(implicit ec: ExecutionContext): Future[CommandResponse] = {
     f.map {
-      case Okay(result) => result
+      case Okay(result) => CommandResponse(true)
       case _ =>
-        "Internal Command Error: this shouldn't happen."
+        system.log.error("Internal Command Error: this shouldn't happen.")
+        CommandResponse(false)
     }.recover {
       case ex: Exception =>
         system.log.error(ex, ex.getMessage)
         ex.getMessage
+        CommandResponse(false)
     }
   }
 
-  def cmdArtifactRead(req: ArtifactAndUser)(implicit ec: ExecutionContext): Future[String] = {
+  def cmdArtifactRead(req: ArtifactAndUser)(implicit ec: ExecutionContext): Future[CommandResponse] = {
     val result = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
       ShardingEnvelope(req.userId, CmdArtifactRead(ref, req.artifactId, req.userId))
     }.mapTo[ArtifactResponse]
     handleCmdResponse(req, result)
   }
 
-  def cmdArtifactAddedToUserFeed(req: ArtifactAndUser)(implicit ec: ExecutionContext): Future[String] = {
+  def cmdArtifactAddedToUserFeed(req: ArtifactAndUser)(implicit ec: ExecutionContext): Future[CommandResponse] = {
     val result = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
       ShardingEnvelope(req.userId, CmdArtifactAddedToUserFeed(ref, req.artifactId, req.userId))
     }.mapTo[ArtifactResponse]
     handleCmdResponse(req, result)
   }
 
-  def cmdArtifactRemovedFromUserFeed(req: ArtifactAndUser)(implicit ec: ExecutionContext): Future[String] = {
+  def cmdArtifactRemovedFromUserFeed(req: ArtifactAndUser)(implicit ec: ExecutionContext): Future[CommandResponse] = {
     val result = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
       ShardingEnvelope(req.userId, CmdArtifactRemovedFromUserFeed(ref, req.artifactId, req.userId))
     }.mapTo[ArtifactResponse]

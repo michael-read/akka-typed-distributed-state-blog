@@ -12,5 +12,6 @@ object ArtifactStatePocAPI {
                                       artifactRead: Option[Boolean],
                                       artifactInUserFeed: Option[Boolean],
                                       failureMsg: Option[String]) extends ExtResponses
+  final case class CommandResponse(success: Boolean) extends ExtResponses
 
 }
