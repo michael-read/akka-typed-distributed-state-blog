@@ -18,9 +18,9 @@ class ArtifactStateScenario
 
   val httpConf = http
 
-//    .baseUrl("http://localhost:8082/artifactState")
+    .baseUrl("http://localhost:8082/artifactState")
 //    .baseUrl("http://192.168.99.100:30082/artifactState")
-    .baseUrl("http://endpoint-route-poc.apps.lightbend412.coreostrain.me/artifactState")
+//    .baseUrl("http://endpoint-route-poc.apps.lightbend412.coreostrain.me/artifactState")
 //    .baseUrl("http://192.168.1.35:30082/artifactState")
     .acceptHeader("application/json")
 
