@@ -5,7 +5,7 @@ import sbt.Keys.fork
 import sbt.Resolver
 
 lazy val akkaHttpVersion = "10.1.8"
-lazy val akkaVersion     = "2.5.23"
+lazy val akkaVersion     = "2.5.24"
 lazy val logbackVersion  = "1.2.3"
 lazy val akkaManagementVersion = "1.0.1"
 lazy val akkaCassandraVersion  = "0.98"
