@@ -4,28 +4,24 @@ import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 import sbt.Keys.fork
 import sbt.Resolver
 
-lazy val akkaHttpVersion = "10.1.8"
-lazy val akkaVersion     = "2.5.24"
+lazy val akkaHttpVersion = "10.1.10"
+lazy val akkaVersion     = "2.5.25"
 lazy val logbackVersion  = "1.2.3"
-lazy val akkaManagementVersion = "1.0.1"
-lazy val akkaCassandraVersion  = "0.98"
+lazy val akkaManagementVersion = "1.0.3"
+lazy val akkaCassandraVersion  = "0.99"
 lazy val jacksonVersion  = "3.6.6"
 
 name := "akka-typed-blog-distributed-state"
 version in ThisBuild := "0.1.0"
 organization in ThisBuild := "com.lightbend"
-scalaVersion in ThisBuild := "2.12.6"
+scalaVersion in ThisBuild := "2.12.10"
 
 lazy val root = (project in file("."))
   .enablePlugins(DockerPlugin)
   .enablePlugins(JavaAppPackaging)
   .enablePlugins(Cinnamon)  // NOTE: this requires a commercial Lightbend Subscription
   .enablePlugins(MultiJvmPlugin).configs(MultiJvm)
-//  .enablePlugins(AshScriptPlugin) // since BASH isn't on alpine
   .settings(
-
-//    dockerBaseImage := "openjdk:8-jre-alpine",
-    dockerBaseImage := "adoptopenjdk/openjdk8",  
     packageName in Docker := "akka-typed-blog-distributed-state/cluster",
     libraryDependencies ++= Seq(
       Cinnamon.library.cinnamonAkkaHttp,
@@ -76,6 +72,9 @@ lazy val root = (project in file("."))
       "-Dcom.sun.management.jmxremote.port=8090 -Dcom.sun.management.jmxremote.rmi.port=8090 -Djava.rmi.server.hostname=127.0.0.1 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
     )
   )
-
+  .settings(
+    dockerBaseImage := "openjdk:8-slim",
+    dockerExposedPorts ++= Seq(9200)
+  )
 cinnamon in run := true
 cinnamon in test := false
