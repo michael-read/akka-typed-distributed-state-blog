@@ -17,12 +17,12 @@ class ArtifactStateScenario
   )
 
   val httpConf = http
-//    .baseUrl("http://localhost:8082/artifactState")
-    .baseUrl("http://192.168.39.119:30082/artifactState")
+
+    .baseUrl("http://localhost:8082/artifactState")
+//    .baseUrl("http://192.168.99.100:30082/artifactState")
 //    .baseUrl("http://endpoint-route-poc.apps.lightbend412.coreostrain.me/artifactState")
 //    .baseUrl("http://192.168.1.35:30082/artifactState")
-//    .acceptHeader("application/json")
-//    .shareConnections
+    .acceptHeader("application/json")
 
   val artifactAndUser = StringBody("""{ "artifactId": ${artifactId}, "userId": "${name}" }""")
 
@@ -62,17 +62,18 @@ class ArtifactStateScenario
 
     .exec(
       http("get_all_states")
-        .get("/setArtifactReadByUser")
+        .post("/setArtifactReadByUser")
         .body(artifactAndUser).asJson
         .check(status.is(200))
     )
 
   setUp(
-    scn.inject(atOnceUsers(1))
-//    scn.inject(rampUsers(100) over (3 minutes))
-//    scn.inject(rampUsers(1000) during (5 minutes))
+//    scn.inject(atOnceUsers(1))
+//    scn.inject(rampUsers(100) during (3 minutes))
+    scn.inject(rampUsers(1000) during (5 minutes))
     // simulation set up -> https://gatling.io/docs/current/general/simulation_setup/
-/*    scn.inject(
+/*
+    scn.inject(
       nothingFor(4 seconds), // 1
       atOnceUsers(10), // 2
       rampUsers(10) during (5 seconds), // 3
@@ -81,7 +82,8 @@ class ArtifactStateScenario
       rampUsersPerSec(100) to 20 during (10 minutes), // 6
       rampUsersPerSec(100) to 20 during (10 minutes) randomized, // 7
       heavisideUsers(1000) during (20 seconds) // 8
-    )*/
+    )
+*/
     .protocols(httpConf)
   )
 }

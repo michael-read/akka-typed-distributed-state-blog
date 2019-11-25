@@ -1,8 +1,6 @@
 
 //lazy val gatlingVersion = "2.3.1"
-lazy val gatlingVersion = "3.2.0"
-
-scalaVersion in ThisBuild := "2.12.10"
+lazy val gatlingVersion = "3.3.1"
 
 enablePlugins(GatlingPlugin)
 

@@ -21,17 +21,17 @@ object ClusterListenerActor {
           message match {
             case MemberUp(member) =>
               context.log.info("Member is Up: {}", member.address)
-              Behavior.same
+              Behaviors.same
             case UnreachableMember(member) =>
               context.log.info("Member detected as unreachable: {}", member)
-              Behavior.same
+              Behaviors.same
             case MemberRemoved(member, previousStatus) =>
               context.log.info(
                 "Member is Removed: {} after {}",
                 member.address, previousStatus)
-              Behavior.same
+              Behaviors.same
             case _ =>
-              Behavior.same // ignore
+              Behaviors.same // ignore
           }
         }
 
