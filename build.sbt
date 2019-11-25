@@ -84,6 +84,9 @@ lazy val root = (project in file("."))
       "-Dcom.sun.management.jmxremote.port=8090 -Dcom.sun.management.jmxremote.rmi.port=8090 -Djava.rmi.server.hostname=127.0.0.1 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
     )
   )
-
+  .settings(
+    dockerBaseImage := "openjdk:8-slim",
+    dockerExposedPorts ++= Seq(9200)
+  )
 cinnamon in run := true
 cinnamon in test := false

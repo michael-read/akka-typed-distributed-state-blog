@@ -2,32 +2,25 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: endpoint
+  name: node
   namespace: poc
 spec:
-  replicas: 1
-  strategy: {}
+  replicas: 2
+#  selector:
+#     matchLabels:
+#       app: ArtifactStateCluster
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: ArtifactStateCluster
-        tag: endpoint
+        tag: clusternode
+      annotations:
+        prometheus.io/scrape: 'true'
     spec:
       containers:
-      - env:
-        - name: CASSANDRA_CONTACT_POINT1
-          value: cassandra-db
-        - name: CINNAMON_ELASTIC_HOSTS
-          value: elasticsearch.lightbend:9200
-        - name: CLUSTER_IP
-          value: endpoint
-        - name: CLUSTER_PORT
-          value: "1601"
-        - name: SEED_PORT_1600_TCP_ADDR
-          value: seed
-        image: akka-typed-state-poc/endpoint:0.1.0
-        imagePullPolicy: Never
+      - name: node
+        image: akka-typed-blog-distributed-state/cluster:0.1.0
+        imagePullPolicy: IfNotPresent
         #health
         livenessProbe:
           httpGet:
@@ -38,9 +31,17 @@ spec:
             path: /ready
             port: akka-mgmt-http
         #health
-        name: endpoint
+        env:
+        - name: HOSTNAME
+          valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+        - name: CASSANDRA_CONTACT_POINT1
+          value: cassandra-peers
+        - name: JAVA_OPTS
+          value: "-Dconfig.resource=cluster-application-k8s.conf"
         ports:
-        - containerPort: 8082
         # akka remoting
         - name: remoting
           containerPort: 2552
@@ -49,53 +50,45 @@ spec:
         - name: akka-mgmt-http
           containerPort: 8558
           protocol: TCP
-        resources: {}
+        - name: node-metrics
+          containerPort: 9001
+
       restartPolicy: Always
-status: {}
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: endpoint
+  name: node
   namespace: poc
 spec:
   type: NodePort
   ports:
-  - name: "8082"
+  - name: akka-mgmt-http
     protocol: TCP
-    port: 8082
-    targetPort: 8082
-    nodePort: 30082
-#  - name: akka-mgmt-http
-#    protocol: TCP
-#    port: 8558
-#    targetPort: akka-mgmt-http
-#    nodePort: 30558
+    port: 8558
+    targetPort: akka-mgmt-http
+    nodePort: 30558
   selector:
-    tag: endpoint
+    tag: clusternode
 
 ---
-#
-# Create a role, `endpoint-reader`, that can list pods and
-# bind the default service account in the `default` namespace
-# to that role.
-#
-
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: endpoint-reader
+  name: node-reader
   namespace: poc
+
 rules:
 - apiGroups: [""] # "" indicates the core API group
   resources: ["pods"]
   verbs: ["get", "watch", "list"]
+
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: read-endpoints
+  name: read-nodes
   namespace: poc
 subjects:
 # Note the `name` line below. The first default refers to the namespace. The second refers to the service account name.
@@ -104,5 +97,5 @@ subjects:
   name: system:serviceaccount:poc:default
 roleRef:
   kind: Role
-  name: endpoint-reader
+  name: node-reader
   apiGroup: rbac.authorization.k8s.io

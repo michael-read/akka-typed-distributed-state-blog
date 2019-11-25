@@ -1,0 +1,19 @@
+# to create a Persistant volume
+# minishift ssh
+#[docker@minishift ~]$ sudo -i
+# mkdir -p /mnt/sda1/var/lib/minishift/openshift.local.volumes/pv
+# mkdir /mnt/sda1/var/lib/minishift/openshift.local.volumes/pv/registry
+# chmod 777 -R /mnt/sda1/var/lib/minishift/openshift.local.volumes/pv
+# exit / exit
+# oc create -f create-persistent-volume.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: app3-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/sda1/var/lib/minishift/openshift.local.volumes/pv/registry

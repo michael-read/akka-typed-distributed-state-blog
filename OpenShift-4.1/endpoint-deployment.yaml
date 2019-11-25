@@ -3,9 +3,11 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: endpoint
-  namespace: poc
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: endpoint
   strategy: {}
   template:
     metadata:
