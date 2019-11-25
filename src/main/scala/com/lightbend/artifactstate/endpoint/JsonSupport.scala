@@ -11,6 +11,7 @@ trait JsonSupport extends SprayJsonSupport {
   implicit val userJsonFormat = jsonFormat2(ArtifactAndUser)
   implicit val psResponse = jsonFormat4(ExtResponse)
   implicit val psResponseII = jsonFormat5(AllStatesResponse)
+  implicit val cmdResponse = jsonFormat1(CommandResponse)
 
 }
 

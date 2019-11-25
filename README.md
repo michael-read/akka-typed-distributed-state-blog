@@ -2,6 +2,13 @@
 
 ## Under Construction - TODO Intro & Article
 
+## Lightbend Subscription Required
+You need to have a [Lightbend Subscription](https://www.lightbend.com/lightbend-platform-subscription) because this project is taking advantage of the following Akka Enhancements: 
+- [Lightbend Telemetry](https://developer.lightbend.com/docs/telemetry/current/home.html) 
+- [Split Brain Resolver](https://doc.akka.io/docs/akka-enhancements/current/split-brain-resolver.html)
+- [Akka Thread Starvation Detector](https://doc.akka.io/docs/akka-enhancements/current/starvation-detector.html)
+
+
 # How to run and test
 
 ## To run (locally):
@@ -39,7 +46,7 @@ curl -d '{"artifactId":1, "userId":"Michael"}' -H "Content-Type: application/jso
 curl 'http://localhost:8082/artifactState/getAllStates?artifactId=1&userId=Michael'
 ```
 ## To test API:
-Testing relies on multi-jvm testing of internal cluster api, as well as HTTP end-to-end integration.
+Testing relies on multi-jvm, and Cassandra for testing of internal cluster api, as well as HTTP end-to-end integration.
 
 From within sbt issue the following command:
 ```

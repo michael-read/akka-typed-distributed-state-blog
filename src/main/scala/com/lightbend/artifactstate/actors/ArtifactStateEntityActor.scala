@@ -46,7 +46,7 @@ object ArtifactStateEntityActor {
 
   def behavior(entityId: String): Behavior[ArtifactCommand] =
     EventSourcedBehavior[ArtifactCommand, ArtifactEvent, ArtifactState](
-      persistenceId = PersistenceId(entityId),
+      persistenceId = PersistenceId(ARTIFACTSTATES_SHARDNAME, entityId),
       emptyState = CurrState(),
       commandHandler,
       eventHandler)
@@ -103,13 +103,13 @@ object ArtifactStateEntityActor {
       case currState: CurrState =>
         event match {
           case ArtifactRead() =>
-            CurrState(true, currState.artifactInUserFeed)
+            CurrState(artifactRead = true, artifactInUserFeed = currState.artifactInUserFeed)
 
           case ArtifactAddedToUserFeed() =>
-            CurrState(currState.artifactRead, true)
+            CurrState(currState.artifactRead, artifactInUserFeed = true)
 
           case ArtifactRemovedFromUserFeed() =>
-            CurrState(currState.artifactRead, false)
+            CurrState(currState.artifactRead)
 
           case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
         }
