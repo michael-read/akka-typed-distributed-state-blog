@@ -1,20 +1,21 @@
 package com.lightbend.artifactstate.app
 
-import akka.NotUsed
+import akka.{Done, NotUsed, actor}
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.scaladsl.adapter._
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
+import akka.actor.typed.scaladsl.adapter.TypedActorSystemOps
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Scheduler, Terminated}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
-import akka.stream.ActorMaterializer
 import com.lightbend.artifactstate.actors.{ArtifactStateEntityActor, ClusterListenerActor}
 import com.lightbend.artifactstate.actors.ArtifactStateEntityActor.{ARTIFACTSTATES_SHARDNAME, ArtifactCommand}
 import com.lightbend.artifactstate.endpoint.ArtifactStateRoutes
 import com.typesafe.config.{Config, ConfigFactory}
+
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object StartNode {
   private val appConfig = ConfigFactory.load()
@@ -28,20 +29,20 @@ object StartNode {
         println(s"starting $nodeRole...")
         val clusterIp = appConfig.getString ("clustering.ip")
         val clusterPort = appConfig.getString ("clustering.port")
-        clusterStartup (clusterName, false, clusterIp, clusterPort, Seq (clusterPort) )
+        clusterStartup (clusterName, isDocker = false, clusterIp, clusterPort, Seq (clusterPort) )
       case nodeRole @ "localEndpoint" =>
         println(s"starting $nodeRole...")
-        endpoint(clusterName, nodeRole, false)
+        endpoint(clusterName, nodeRole, inContainer = false)
 
       // run in docker
       case nodeRole @ "dockerCluster" =>
         println(s"starting $nodeRole...")
         val clusterIp = appConfig.getString ("clustering.ip")
         val clusterPort = appConfig.getString ("clustering.port")
-        clusterStartup (clusterName, true, clusterIp, clusterPort, Seq (clusterPort) )
+        clusterStartup (clusterName, isDocker = true, clusterIp, clusterPort, Seq (clusterPort) )
       case nodeRole @ "dockerEndpoint" =>
         println(s"starting $nodeRole...")
-        endpoint(clusterName, nodeRole, true)
+        endpoint(clusterName, nodeRole, inContainer = true)
 
       // run in kubernetes
       case nodeRole @ "k8sCluster" =>
@@ -49,7 +50,7 @@ object StartNode {
         clusterStartupK8s(appConfig, clusterName)
       case nodeRole @ "k8sEndpoint" =>
         println(s"starting $nodeRole...")
-        endpoint(clusterName, nodeRole, true)
+        endpoint(clusterName, nodeRole, inContainer = true)
 
     }
   }
@@ -57,18 +58,18 @@ object StartNode {
   def clusterStartup(clusterName: String, isDocker: Boolean, defaultIp: String, defaultPort: String, ports: Seq[String]): Unit = {
 
     ports foreach { port =>
-      println(s"starting on ${port}")
+      println(s"starting on $port")
 
       // Override the configuration of the port
-      val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).
+      val config = ConfigFactory.parseString("akka.remote.artery.canonical.port=" + port).
         withFallback(appConfig)
 
       val localBehavior : Behavior[NotUsed] =
         Behaviors.setup { context =>
 
           val TypeKey = EntityTypeKey[ArtifactCommand](ARTIFACTSTATES_SHARDNAME)
-          ClusterSharding(context.system).init(Entity(typeKey = TypeKey,
-            createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId))
+          ClusterSharding(context.system).init(Entity(TypeKey)
+            (createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId))
             .withSettings(ClusterShardingSettings(context.system).withRole("sharded")))
 
           if (port == defaultPort) {
@@ -94,15 +95,14 @@ object StartNode {
     val k8sBehavior : Behavior[NotUsed] =
       Behaviors.setup { context =>
 
-        val untypedSystem = context.system.toUntyped
-        AkkaManagement(untypedSystem).start()
-        ClusterBootstrap(untypedSystem).start()
+        val classicSystem = TypedActorSystemOps(context.system).toClassic
+        AkkaManagement(classicSystem).start()
+        ClusterBootstrap(classicSystem).start()
 
         val TypeKey = EntityTypeKey[ArtifactCommand](ARTIFACTSTATES_SHARDNAME)
-        val artifactActorSupervisor: ActorRef[ShardingEnvelope[ArtifactCommand]] =
-          ClusterSharding(context.system).init(Entity(typeKey = TypeKey,
-            createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId))
-            .withSettings(ClusterShardingSettings(context.system).withRole("sharded")))
+        ClusterSharding(context.system).init(Entity(TypeKey)
+          (createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId))
+          .withSettings(ClusterShardingSettings(context.system).withRole("sharded")))
 
         Behaviors.receiveSignal {
           case (_, Terminated(_)) =>
@@ -116,43 +116,41 @@ object StartNode {
 
   }
 
-  def endpoint(clusterName: String, nodeRole: String, inContainer: Boolean) = {
+  def endpoint(clusterName: String, nodeRole: String, inContainer: Boolean): Future[Done] = {
 
     val main: Behavior[NotUsed] =
       Behaviors.setup { context =>
 
-        implicit val unTypedSystem = context.system.toUntyped
-        implicit val materializer: ActorMaterializer = ActorMaterializer()
+        implicit val classicSystem: actor.ActorSystem =  TypedActorSystemOps(context.system).toClassic
 
-        implicit val ec = context.system.executionContext
-        implicit val scheduler = context.system.scheduler
+        implicit val ec: ExecutionContextExecutor = context.system.executionContext
+        implicit val scheduler: Scheduler = context.system.scheduler
 
         nodeRole match {
           case "k8sEndpoint" =>
             //#start-akka-management
-            AkkaManagement(unTypedSystem).start()
+            AkkaManagement(classicSystem).start()
             //#start-akka-cluster bootstrap
-            ClusterBootstrap(unTypedSystem).start()
+            ClusterBootstrap(classicSystem).start()
           case _ =>
         }
 
         val TypeKey = EntityTypeKey[ArtifactCommand](ARTIFACTSTATES_SHARDNAME)
         val psEntities: ActorRef[ShardingEnvelope[ArtifactCommand]] =
-          ClusterSharding(context.system).init(Entity(typeKey = TypeKey,
-            createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId)))
+          ClusterSharding(context.system).init(Entity(TypeKey)
+            (createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId)))
 
-        var psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]] = psEntities
+        val psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]] = psEntities
 
         lazy val routes: Route = new ArtifactStateRoutes(context.system, psCommandActor).psRoutes
 
-        inContainer match {
-          case false =>
-            Http().bindAndHandle(routes, "localhost")
-            context.log.info(s"Server online at http://localhost:8082/")
-          case _ =>
-            // running inside of docker container
-            Http().bindAndHandle(routes, "0.0.0.0", 8082)
-            context.log.info(s"Server online inside container on port 8082")
+        if (inContainer) {
+          Http().bindAndHandle(routes, "0.0.0.0", 8082)
+          context.log.info(s"Server online inside container on port 8082")
+        }
+        else {
+          Http().bindAndHandle(routes, "localhost")
+          context.log.info(s"Server online at http://localhost:8082/")
         }
 
         Behaviors.receiveSignal {

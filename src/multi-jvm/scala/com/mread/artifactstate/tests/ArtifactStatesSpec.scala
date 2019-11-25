@@ -20,11 +20,12 @@ import com.lightbend.artifactstate.endpoint.ArtifactStateRoutes
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 import com.lightbend.artifactstate.endpoint.ArtifactStatePocAPI.ArtifactAndUser
+import scala.language.postfixOps
 
 object ArtifactStatesSpec extends MultiNodeConfig {
-  val endpointTest = role("endpointTest")
-  val persistNode1 = role("persist1")
-  val persistNode2 = role("persist2")
+  val endpointTest: RoleName = role("endpointTest")
+  val persistNode1: RoleName = role("persist1")
+  val persistNode2: RoleName = role("persist2")
 
   nodeConfig(persistNode1, persistNode2) {
     ConfigFactory.parseString(s"""
@@ -79,7 +80,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
   abstract class RouteTesting(psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]]) extends ArtifactStateRoutes(typedSystem, psCommandActor) with RouteTest with TestFrameworkInterface
     with ScalaFutures with ScalatestUtils {
 
-    override protected def createActorSystem(): akka.actor.ActorSystem = typedSystem.toUntyped
+    override protected def createActorSystem(): akka.actor.ActorSystem = typedSystem.toClassic
     override def failTest(msg: String): Nothing = throw new TestFailedException(msg, 11)
 
     lazy val routes: Route = psRoutes
@@ -98,21 +99,19 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
   def startPersistentSharding(): ActorRef[ShardingEnvelope[ArtifactCommand]] = {
    val TypeKey = EntityTypeKey[ArtifactCommand](ARTIFACTSTATES_SHARDNAME)
    val artifactActorSupervisor: ActorRef[ShardingEnvelope[ArtifactCommand]] =
-     ClusterSharding(system.toTyped).init(Entity(typeKey = TypeKey,
-       createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId))
+     ClusterSharding(system.toTyped).init(entity = Entity(TypeKey)
+     (createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId))
        .withSettings(ClusterShardingSettings(system.toTyped).withRole("sharded")))
    artifactActorSupervisor
   }
 
   def startProxySharding(): ActorRef[ShardingEnvelope[ArtifactCommand]] = {
     val TypeKey = EntityTypeKey[ArtifactCommand](ARTIFACTSTATES_SHARDNAME)
-    val artifactActorSupervisor: ActorRef[ShardingEnvelope[ArtifactCommand]] =
-      ClusterSharding(system.toTyped).init(Entity(typeKey = TypeKey,
-        createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId)))
-    artifactActorSupervisor
+    ClusterSharding(system.toTyped).init(Entity(TypeKey)
+      (ctx => ArtifactStateEntityActor.behavior(ctx.entityId)))
   }
 
-  val artifactMember = ArtifactAndUser(1l, "Mike")
+  val artifactMember = ArtifactAndUser(1L, "Mike")
 
   "Sharded ArtifactState app" must {
 
@@ -132,7 +131,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
           val region = startProxySharding()
           val probe = TestProbe[ArtifactResponse]
           region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRead(probe.ref, artifactMember.artifactId, artifactMember.userId))
-          probe.expectMessage(Okay("OK"))
+          probe.expectMessage(Okay())
         }
       }
       enterBarrier("after set artifact read")
@@ -144,7 +143,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
           val region = startProxySharding()
           val probe = TestProbe[ArtifactResponse]
           region ! ShardingEnvelope(artifactMember.userId, CmdArtifactAddedToUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
-          probe.expectMessage(Okay("OK"))
+          probe.expectMessage(Okay())
         }
       }
       enterBarrier("after added to user feed")
@@ -194,10 +193,10 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         new RouteTesting(region) {
 
           // test setting artifactstate
-          val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
 
           // using the RequestBuilding DSL:
-          val request1 = Post("/artifactState/setArtifactReadByUser").withEntity(userEntity)
+          val request1: HttpRequest = Post("/artifactState/setArtifactReadByUser").withEntity(userEntity)
 
           request1 ~> routes ~> check {
             status should ===(StatusCodes.OK)
@@ -223,7 +222,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         new RouteTesting(region) {
 
           // test retrieve of new state
-          val request2 = Get("/artifactState/isArtifactReadByUser?artifactId=1&userId=Mike")
+          val request2: HttpRequest = Get("/artifactState/isArtifactReadByUser?artifactId=1&userId=Mike")
 
           request2 ~> routes ~> check {
             status should ===(StatusCodes.OK)
@@ -253,9 +252,9 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
         new RouteTesting(region) {
 
-          val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
 
-          val request = Post("/artifactState/isArtifactReadByUser").withEntity(userEntity)
+          val request: HttpRequest = Post("/artifactState/isArtifactReadByUser").withEntity(userEntity)
 
           request ~> routes ~> check {
             status should ===(StatusCodes.OK)
@@ -284,10 +283,10 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         new RouteTesting(region) {
 
           // test setting memberfeed
-          val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
 
           // using the RequestBuilding DSL:
-          val request1 = Post("/artifactState/setArtifactAddedToUserFeed").withEntity(userEntity)
+          val request1: HttpRequest = Post("/artifactState/setArtifactAddedToUserFeed").withEntity(userEntity)
 
           request1 ~> routes ~> check {
             status should ===(StatusCodes.OK)
@@ -314,7 +313,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         new RouteTesting(region) {
 
           // test retrieve of new state
-          val request2 = Get("/artifactState/isArtifactInUserFeed?artifactId=1&userId=Mike")
+          val request2: HttpRequest = Get("/artifactState/isArtifactInUserFeed?artifactId=1&userId=Mike")
 
           request2 ~> routes ~> check {
             status should ===(StatusCodes.OK)
@@ -340,9 +339,9 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
         new RouteTesting(region) {
 
-          val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
 
-          val request = Post("/artifactState/isArtifactInUserFeed").withEntity(userEntity)
+          val request: HttpRequest = Post("/artifactState/isArtifactInUserFeed").withEntity(userEntity)
 
           request ~> routes ~> check {
             status should ===(StatusCodes.OK)
@@ -369,10 +368,10 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         new RouteTesting(region) {
 
           // test setting memberfeed
-          val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
 
           // using the RequestBuilding DSL:
-          val request1 = Post("/artifactState/setArtifactRemovedFromUserFeed").withEntity(userEntity)
+          val request1: HttpRequest = Post("/artifactState/setArtifactRemovedFromUserFeed").withEntity(userEntity)
 
           request1 ~> routes ~> check {
             status should ===(StatusCodes.OK)
@@ -399,7 +398,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         new RouteTesting(region) {
 
           // test retrieve of new state
-          val request2 = Get("/artifactState/isArtifactInUserFeed?artifactId=1&userId=Mike")
+          val request2: HttpRequest = Get("/artifactState/isArtifactInUserFeed?artifactId=1&userId=Mike")
 
           request2 ~> routes ~> check {
             status should ===(StatusCodes.OK)
@@ -429,7 +428,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         new RouteTesting(region) {
 
           // test retrieve of new state
-          val request2 = Get("/artifactState/getAllStates?artifactId=1&userId=Mike")
+          val request2: HttpRequest = Get("/artifactState/getAllStates?artifactId=1&userId=Mike")
 
           request2 ~> routes ~> check {
             status should ===(StatusCodes.OK)
@@ -458,9 +457,9 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         // You have to use such new RouteTesting { } block around the routing test code
         new RouteTesting(region) {
 
-          val userEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
 
-          val request = Post("/artifactState/getAllStates").withEntity(userEntity)
+          val request: HttpRequest = Post("/artifactState/getAllStates").withEntity(userEntity)
 
           request ~> routes ~> check {
             status should ===(StatusCodes.OK)

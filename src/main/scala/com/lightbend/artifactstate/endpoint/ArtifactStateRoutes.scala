@@ -1,7 +1,7 @@
 package com.lightbend.artifactstate.endpoint
 
 import akka.actor.typed.scaladsl.AskPattern._
-import akka.actor.typed.{ActorRef, ActorSystem}
+import akka.actor.typed.{ActorRef, ActorSystem, Scheduler}
 import akka.cluster.sharding.typed.ShardingEnvelope
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
@@ -14,12 +14,13 @@ import com.lightbend.artifactstate.endpoint.ArtifactStatePocAPI._
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.postfixOps
 
 class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]]) extends JsonSupport {
 
   // Required by the `ask` (?) method below
-  implicit lazy val timeout = Timeout(5 seconds) // usually we'd obtain the timeout from the system's configuration
-  implicit val scheduler = system.scheduler
+  implicit lazy val timeout: Timeout = Timeout(5 seconds) // usually we'd obtain the timeout from the system's configuration
+  implicit val scheduler: Scheduler = system.scheduler
 
   def handleResponse(req: ArtifactAndUser, f: Future[ArtifactResponse])(implicit ec: ExecutionContext): Future[ExtResponse] = {
     f.map {
@@ -31,7 +32,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
         ExtResponse(req.artifactId, req.userId, None, Some("Internal Query Error: this shouldn't happen."))
     }.recover {
       case ex: Exception =>
-        system.log.error(ex, ex.getMessage)
+        system.log.error(ex.getMessage, ex)
         ExtResponse(req.artifactId, req.userId, None, Some(ex.getMessage))
     }
   }
@@ -61,7 +62,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
         AllStatesResponse(req.artifactId, req.userId, None, None, Some("Internal Error: this shouldn't happen."))
     }.recover {
       case ex: Exception =>
-        system.log.error(ex, ex.getMessage)
+        system.log.error(ex.getMessage, ex)
         AllStatesResponse(req.artifactId, req.userId, None, None, Some(ex.getMessage))
     }
   }
@@ -74,7 +75,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
         CommandResponse(false)
     }.recover {
       case ex: Exception =>
-        system.log.error(ex, ex.getMessage)
+        system.log.error(ex.getMessage, ex)
         ex.getMessage
         CommandResponse(false)
     }
@@ -119,7 +120,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
           extractExecutionContext { implicit executor =>
             concat(
               get {
-                parameters('artifactId.as[Long], 'userId) { (artifactId, userId) =>
+                parameters(Symbol("artifactId").as[Long], Symbol("userId")) { (artifactId, userId) =>
                   complete {
                     queryArtifactRead(ArtifactAndUser(artifactId, userId))
                   }
@@ -136,7 +137,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
           extractExecutionContext { implicit executor =>
             concat(
               get {
-                parameters('artifactId.as[Long], 'userId) { (artifactId, userId) =>
+                parameters(Symbol("artifactId").as[Long], Symbol("userId")) { (artifactId, userId) =>
                   val req = ArtifactAndUser(artifactId, userId)
                   complete(queryArtifactInUserFeed(req))
                 }
@@ -152,7 +153,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
           extractExecutionContext { implicit executor =>
             concat(
               get {
-                parameters('artifactId.as[Long], 'userId) { (artifactId, userId) =>
+                parameters(Symbol("artifactId").as[Long], Symbol("userId")) { (artifactId, userId) =>
                   val req = ArtifactAndUser(artifactId, userId)
                   complete(queryAllStates(req))
                 }

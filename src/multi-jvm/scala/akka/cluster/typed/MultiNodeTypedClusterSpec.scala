@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import akka.actor.{Address, Scheduler}
 import akka.actor.typed.ActorSystem
-import akka.remote.testkit.{FlightRecordingSupport, MultiNodeSpec, STMultiNodeSpec}
+import akka.remote.testkit.{MultiNodeSpec, STMultiNodeSpec}
 import org.scalatest.{Matchers, Suite}
 import akka.actor.typed.scaladsl.adapter._
 import akka.cluster.ClusterEvent
@@ -16,7 +16,6 @@ trait MultiNodeTypedClusterSpec
   extends Suite
       with STMultiNodeSpec
 //      with WatchedByCoroner
-      with FlightRecordingSupport
       with Matchers {
     self: MultiNodeSpec =>
 
