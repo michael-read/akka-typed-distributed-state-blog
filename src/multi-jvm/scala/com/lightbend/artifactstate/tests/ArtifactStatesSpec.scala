@@ -1,5 +1,6 @@
-package com.mread.artifactstate.tests
+package com.lightbend.artifactstate.tests
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.server.Route
 import akka.actor.testkit.typed.scaladsl.TestProbe
@@ -10,6 +11,7 @@ import akka.actor.typed.scaladsl.adapter._
 import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.cluster.typed.{Join, MultiNodeTypedClusterSpec}
+import akka.http.scaladsl.testkit.RouteTestTimeout
 import akka.persistence.Persistence
 import akka.remote.testconductor.RoleName
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
@@ -18,8 +20,9 @@ import com.lightbend.artifactstate.actors.ArtifactStateEntityActor
 import com.lightbend.artifactstate.actors.ArtifactStateEntityActor.{ARTIFACTSTATES_SHARDNAME, AllStates, ArtifactCommand, ArtifactResponse, CmdArtifactAddedToUserFeed, CmdArtifactRead, CmdArtifactRemovedFromUserFeed, Okay, QryGetAllStates}
 import com.lightbend.artifactstate.endpoint.ArtifactStateRoutes
 import com.typesafe.config.ConfigFactory
-import org.scalatest.concurrent.ScalaFutures
 import com.lightbend.artifactstate.endpoint.ArtifactStatePocAPI.ArtifactAndUser
+import org.scalatest.concurrent.ScalaFutures
+
 import scala.language.postfixOps
 
 object ArtifactStatesSpec extends MultiNodeConfig {
@@ -113,6 +116,9 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
   val artifactMember = ArtifactAndUser(1L, "Mike")
 
+  // fix flakey failure: "Request was neither completed nor rejected within 1 second (DynamicVariable.scala:59)"
+  implicit def default(implicit system: ActorSystem): RouteTestTimeout = RouteTestTimeout(5.seconds)
+
   "Sharded ArtifactState app" must {
 
     "join cluster" in within(20.seconds) {
@@ -125,9 +131,9 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
     // these tests test state directly against the cluster
 
-    "set artifact read" in within (10.seconds) {
+    "set artifact read" in within (15.seconds) {
       awaitAssert {
-        within(10.second) {
+        within(15.seconds) {
           val region = startProxySharding()
           val probe = TestProbe[ArtifactResponse]
           region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRead(probe.ref, artifactMember.artifactId, artifactMember.userId))
@@ -137,9 +143,9 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       enterBarrier("after set artifact read")
     }
 
-    "set artifact added to user feed" in within (10.seconds) {
+    "set artifact added to user feed" in within (15.seconds) {
       awaitAssert {
-        within(10.second) {
+        within(15.seconds) {
           val region = startProxySharding()
           val probe = TestProbe[ArtifactResponse]
           region ! ShardingEnvelope(artifactMember.userId, CmdArtifactAddedToUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
@@ -156,7 +162,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRead(probe.ref, artifactMember.artifactId, artifactMember.userId))
         region ! ShardingEnvelope(artifactMember.userId, CmdArtifactAddedToUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
         awaitAssert {
-          within(10.second) {
+          within(15.seconds) {
             region ! ShardingEnvelope(artifactMember.userId, QryGetAllStates(probe.ref, artifactMember.artifactId, artifactMember.userId))
             probe.expectMessage(AllStates(artifactRead = true, artifactInUserFeed = true))
           }
@@ -172,7 +178,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         val probe = TestProbe[ArtifactResponse]
         region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRemovedFromUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
         awaitAssert {
-          within(10.second) {
+          within(15.seconds) {
             region ! ShardingEnvelope(artifactMember.userId, QryGetAllStates(probe.ref, artifactMember.artifactId, artifactMember.userId))
             probe.expectMessage(AllStates(artifactRead = true, artifactInUserFeed = false))
           }
@@ -185,15 +191,15 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
     
     // test artifact read state
 
-    "set artifact read state (POST)" in within(15 seconds) {
+    "set artifact read state (POST)" in within(15.seconds) {
       runOn(endpointTest) {
 
         val region = startProxySharding()
 
         new RouteTesting(region) {
-
+          PatienceConfig()
           // test setting artifactstate
-          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaTest
 
           // using the RequestBuilding DSL:
           val request1: HttpRequest = Post("/artifactState/setArtifactReadByUser").withEntity(userEntity)
@@ -215,7 +221,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       enterBarrier("after set artifact read state (POST)" )
     }
 
-    "validate that the artifact state is read (GET)" in within(15 seconds) {
+    "validate that the artifact state is read (GET)" in within(15.seconds) {
       runOn(endpointTest) {
         val region = startProxySharding()
 
@@ -242,7 +248,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       enterBarrier("after validate that the artifact state is read (GET)" )
     }
 
-    "validate that the artifact state is read (POST)" in within(15 seconds) {
+    "validate that the artifact state is read (POST)" in within(15.seconds) {
       runOn(endpointTest) {
         val region = startProxySharding()
 
@@ -252,7 +258,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
         new RouteTesting(region) {
 
-          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaTest
 
           val request: HttpRequest = Post("/artifactState/isArtifactReadByUser").withEntity(userEntity)
 
@@ -276,14 +282,14 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
     // artifact / member feed tests
 
-    "set artifact in member feed (POST)" in within(15 seconds) {
+    "set artifact in member feed (POST)" in within(15.seconds) {
       runOn(endpointTest) {
         val region = startProxySharding()
 
         new RouteTesting(region) {
 
           // test setting memberfeed
-          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaTest
 
           // using the RequestBuilding DSL:
           val request1: HttpRequest = Post("/artifactState/setArtifactAddedToUserFeed").withEntity(userEntity)
@@ -306,7 +312,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       enterBarrier("after set artifact in member feed (POST)" )
     }
 
-    "validate that the artifact / member feed is read (GET)" in within(15 seconds) {
+    "validate that the artifact / member feed is read (GET)" in within(15.seconds) {
       runOn(endpointTest) {
         val region = startProxySharding()
 
@@ -333,13 +339,13 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       enterBarrier("after validate that the artifact / member feed is read (GET)" )
     }
 
-    "validate that the artifact is in member feed (POST)" in within(15 seconds) {
+    "validate that the artifact is in member feed (POST)" in within(15.seconds) {
       runOn(endpointTest) {
         val region = startProxySharding()
 
         new RouteTesting(region) {
 
-          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaTest
 
           val request: HttpRequest = Post("/artifactState/isArtifactInUserFeed").withEntity(userEntity)
 
@@ -361,14 +367,14 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       enterBarrier("after validate that the artifact is in member feed (POST)" )
     }
 
-    "remove artifact from member feed (POST)" in within(15 seconds) {
+    "remove artifact from member feed (POST)" in within(15.seconds) {
       runOn(endpointTest) {
         val region = startProxySharding()
 
         new RouteTesting(region) {
 
           // test setting memberfeed
-          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaTest
 
           // using the RequestBuilding DSL:
           val request1: HttpRequest = Post("/artifactState/setArtifactRemovedFromUserFeed").withEntity(userEntity)
@@ -391,7 +397,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       enterBarrier("after remove artifact from member feed (POST)" )
     }
 
-    "validate that the artifact has been removed from member feed (GET)" in within(15 seconds) {
+    "validate that the artifact has been removed from member feed (GET)" in within(15.seconds) {
       runOn(endpointTest) {
         val region = startProxySharding()
 
@@ -421,7 +427,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
     // test getAllStates
 
-    "validate getAllStates (artifactRead: true, artifactInFeed: false (GET)" in within(15 seconds) {
+    "validate getAllStates (artifactRead: true, artifactInFeed: false (GET)" in within(15.seconds) {
       runOn(endpointTest) {
         val region = startProxySharding()
 
@@ -448,7 +454,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       enterBarrier("after validate getAllStates (artifactRead: true, artifactInFeed: false (GET)" )
     }
 
-    "validate getAllStates (artifactRead: true, artifactInFeed: false (POST)" in within(15 seconds) {
+    "validate getAllStates (artifactRead: true, artifactInFeed: false (POST)" in within(15.seconds) {
       runOn(endpointTest) {
         val region = startProxySharding()
 
@@ -457,7 +463,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         // You have to use such new RouteTesting { } block around the routing test code
         new RouteTesting(region) {
 
-          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaFutures
+          val userEntity: MessageEntity = Marshal(artifactMember).to[MessageEntity].futureValue // futureValue is from ScalaTest
 
           val request: HttpRequest = Post("/artifactState/getAllStates").withEntity(userEntity)
 
