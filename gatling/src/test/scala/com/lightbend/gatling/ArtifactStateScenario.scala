@@ -17,11 +17,7 @@ class ArtifactStateScenario
   )
 
   val httpConf = http
-
     .baseUrl("http://localhost:8082/artifactState")
-//    .baseUrl("http://192.168.99.100:30082/artifactState")
-//    .baseUrl("http://endpoint-route-poc.apps.lightbend412.coreostrain.me/artifactState")
-//    .baseUrl("http://192.168.1.35:30082/artifactState")
     .acceptHeader("application/json")
 
   val artifactAndUser = StringBody("""{ "artifactId": ${artifactId}, "userId": "${name}" }""")
@@ -38,20 +34,25 @@ class ArtifactStateScenario
     )
 
     .exec(
+      http("is_artifact_read")
+        .post("/isArtifactReadByUser")
+        .body(artifactAndUser).asJson
+        .check(status.is(200))
+    )
+
+    .exec(
       http("set_artifact_in_feed")
         .post("/setArtifactAddedToUserFeed")
         .body(artifactAndUser).asJson
         .check(status.is(200))
     )
 
-/*
     .exec(
-      http("get_all_states")
-        .post("/setArtifactReadByUser")
+      http("is_artifact_in_user_feed")
+        .post("/isArtifactInUserFeed")
         .body(artifactAndUser).asJson
         .check(status.is(200))
     )
-*/
 
     .exec(
       http("set_artifact_removed_from_feed")
