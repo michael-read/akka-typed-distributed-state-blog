@@ -2,8 +2,8 @@
 
 ## Under Construction - TODO Intro & Article
 
-## Lightbend Subscription Required
-You need to have a [Lightbend Subscription](https://www.lightbend.com/lightbend-platform-subscription) because this project is taking advantage of the following Akka Enhancements: 
+## Lightbend Platform Subscription Required
+You need to have a current [Lightbend Platform Subscription](https://www.lightbend.com/lightbend-platform-subscription) because this project is taking advantage of Lightbend Telemetry as well as Akka Resilience Enhancements: 
 - [Lightbend Telemetry](https://developer.lightbend.com/docs/telemetry/current/home.html) 
 - [Split Brain Resolver](https://doc.akka.io/docs/akka-enhancements/current/split-brain-resolver.html)
 - [Akka Thread Starvation Detector](https://doc.akka.io/docs/akka-enhancements/current/starvation-detector.html)
