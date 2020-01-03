@@ -1,5 +1,7 @@
 package com.mread.gatling
 
+import com.typesafe.config.ConfigFactory
+
 import scala.concurrent.duration._
 import scala.util.Random
 
@@ -9,6 +11,10 @@ import io.gatling.http.Predef._
 class ArtifactStateScenario
   extends Simulation {
 
+  private val config =  ConfigFactory.load()
+
+  val baseUrl = config.getString("loadtest.baseUrl")
+
   val namesFeeder = csv("lastnames.csv").random
 
   val artifactIds = Iterator.continually(
@@ -17,7 +23,7 @@ class ArtifactStateScenario
   )
 
   val httpConf = http
-    .baseUrl("http://localhost:8082/artifactState")
+    .baseUrl(s"${baseUrl}/artifactState")
     .acceptHeader("application/json")
 
   val artifactAndUser = StringBody("""{ "artifactId": ${artifactId}, "userId": "${name}" }""")

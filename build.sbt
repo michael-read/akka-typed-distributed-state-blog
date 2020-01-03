@@ -1,11 +1,14 @@
 import com.lightbend.cinnamon.sbt.Cinnamon.CinnamonKeys.cinnamon
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
-import sbt.Keys.fork
-import sbt.Resolver
+//import sbt.Keys.fork
+//import sbt.Resolver
+
+credentials in ThisBuild += Credentials(Path.userHome / ".lightbend" / "commercial.credentials")
+resolvers in ThisBuild += "lightbend-commercial-maven" at "https://repo.lightbend.com/commercial-releases"
 
 lazy val akkaHttpVersion = "10.1.10"
-lazy val akkaVersion     = "2.6.0"
+lazy val akkaVersion     = "2.6.1"
 lazy val logbackVersion  = "1.2.3"
 lazy val akkaManagementVersion = "1.0.5"
 lazy val akkaCassandraVersion  = "0.100"
