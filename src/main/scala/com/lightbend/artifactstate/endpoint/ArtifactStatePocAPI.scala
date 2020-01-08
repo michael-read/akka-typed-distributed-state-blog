@@ -1,5 +1,6 @@
 package com.lightbend.artifactstate.endpoint
 
+// these are just for the JSON formats/external protocol/api
 object ArtifactStatePocAPI {
 
   final case class ArtifactAndUser(artifactId: Long, userId: String)

@@ -1,6 +1,5 @@
 package com.lightbend.artifactstate.actors
 
-import akka.Done
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import akka.persistence.typed.PersistenceId
@@ -10,24 +9,25 @@ import com.lightbend.artifactstate.serializer.{EventSerializeMarker, MsgSerializ
 
 object ArtifactStateEntityActor {
 
-  final val ARTIFACTSTATES_SHARDNAME = "ArtifactState"
+  final val ArtifactStatesShardName = "ArtifactState"
 
   sealed trait BaseId extends MsgSerializeMarker {
     val artifactId: Long
     val userId: String
   }
   sealed trait ArtifactCommand extends BaseId
+  sealed trait ArtifactQuery extends ArtifactCommand  
   sealed trait ArtifactResponse extends MsgSerializeMarker
 
   // queries
-  final case class QryArtifactReadByUser(replyTo: ActorRef[ArtifactResponse], artifactId: Long, userId: String) extends ArtifactCommand
-  final case class QryArtifactInUserFeed(replyTo: ActorRef[ArtifactResponse], artifactId: Long, userId: String) extends ArtifactCommand
-  final case class QryGetAllStates(replyTo: ActorRef[ArtifactResponse], artifactId: Long, userId: String) extends ArtifactCommand
+  final case class IsArtifactReadByUser(replyTo: ActorRef[ArtifactReadByUser], artifactId: Long, userId: String) extends ArtifactQuery
+  final case class IsArtifactInUserFeed(replyTo: ActorRef[ArtifactInUserFeed], artifactId: Long, userId: String) extends ArtifactQuery
+  final case class GetAllStates(replyTo: ActorRef[AllStates], artifactId: Long, userId: String) extends ArtifactQuery
 
   // commands
-  final case class CmdArtifactRead(replyTo: ActorRef[ArtifactResponse], artifactId: Long, userId: String) extends ArtifactCommand
-  final case class CmdArtifactAddedToUserFeed(replyTo: ActorRef[ArtifactResponse], artifactId: Long, userId: String) extends ArtifactCommand
-  final case class CmdArtifactRemovedFromUserFeed(replyTo: ActorRef[ArtifactResponse], artifactId: Long, userId: String) extends ArtifactCommand
+  final case class SetArtifactRead(replyTo: ActorRef[Okay], artifactId: Long, userId: String) extends ArtifactCommand
+  final case class SetArtifactAddedToUserFeed(replyTo: ActorRef[Okay], artifactId: Long, userId: String) extends ArtifactCommand
+  final case class SetArtifactRemovedFromUserFeed(replyTo: ActorRef[Okay], artifactId: Long, userId: String) extends ArtifactCommand
 
   // responses
   final case class Okay(okay: String = "OK") extends ArtifactResponse
@@ -41,78 +41,65 @@ object ArtifactStateEntityActor {
   final case class ArtifactAddedToUserFeed() extends ArtifactEvent
   final case class ArtifactRemovedFromUserFeed() extends ArtifactEvent
 
-  sealed trait ArtifactState extends MsgSerializeMarker
-  final case class CurrState(artifactRead: Boolean = false, artifactInUserFeed : Boolean = false) extends ArtifactState
+  final case class CurrState(artifactRead: Boolean = false, artifactInUserFeed : Boolean = false) extends MsgSerializeMarker
 
-  def behavior(entityId: String): Behavior[ArtifactCommand] =
-    EventSourcedBehavior[ArtifactCommand, ArtifactEvent, ArtifactState](
-      persistenceId = PersistenceId(ARTIFACTSTATES_SHARDNAME, entityId),
+  def apply(entityId: String): Behavior[ArtifactCommand] =
+    EventSourcedBehavior[ArtifactCommand, ArtifactEvent, CurrState](
+      persistenceId = PersistenceId(ArtifactStatesShardName, entityId),
       emptyState = CurrState(),
       commandHandler,
       eventHandler)
 
-  private val commandHandler: (ArtifactState, ArtifactCommand) => Effect[ArtifactEvent, ArtifactState] = { (state, command) =>
-    state match {
-      case currState: CurrState =>
-        command match {
-          case cmd@CmdArtifactRead (replyTo, artifactId, userId) => artifactRead(replyTo, currState)
-          case cmd@CmdArtifactAddedToUserFeed (replyTo, artifactId, userId) => artifactAddedToUserFeed(replyTo, currState)
-          case cmd@CmdArtifactRemovedFromUserFeed (replyTo, artifactId, userId) => artifactRemovedFromUserFeed(replyTo, currState)
+  private val commandHandler: (CurrState, ArtifactCommand) => Effect[ArtifactEvent, CurrState] = { (state, command) =>
+    command match {
+      case SetArtifactRead (replyTo, _, _) => artifactRead(replyTo, state)
+      case SetArtifactAddedToUserFeed (replyTo, _, _) => artifactAddedToUserFeed(replyTo, state)
+      case SetArtifactRemovedFromUserFeed (replyTo, _, _) => artifactRemovedFromUserFeed(replyTo, state)
 
-          case QryArtifactReadByUser (replyTo, artifactId, userId) => getArtifactRead(replyTo, currState)
-          case QryArtifactInUserFeed (replyTo, artifactId, userId) => getAritfactInFeed (replyTo, currState)
-          case QryGetAllStates (replyTo, artifactId, userId) => getArtifactState (replyTo, currState)
-
-          case _ => Effect.unhandled
-        }
-
-      case _ =>
-        Effect.unhandled
+      case IsArtifactReadByUser (replyTo, _, _) => getArtifactRead(replyTo, state)
+      case IsArtifactInUserFeed (replyTo, _, _) => getAritfactInFeed (replyTo, state)
+      case GetAllStates (replyTo, _, _) => getArtifactState (replyTo, state)
     }
   }
 
-  private def artifactRead(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
+  private def artifactRead(replyTo: ActorRef[Okay], currState: CurrState): Effect[ArtifactEvent, CurrState] = {
     Effect.persist(ArtifactRead()).thenRun(_ => replyTo ! Okay())
   }
 
-  private def artifactAddedToUserFeed(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
+  private def artifactAddedToUserFeed(replyTo: ActorRef[Okay], currState: CurrState): Effect[ArtifactEvent, CurrState] = {
     Effect.persist(ArtifactAddedToUserFeed()).thenRun(_ => replyTo ! Okay())
   }
 
-  private def artifactRemovedFromUserFeed(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
+  private def artifactRemovedFromUserFeed(replyTo: ActorRef[Okay], currState: CurrState): Effect[ArtifactEvent, CurrState] = {
     Effect.persist(ArtifactRemovedFromUserFeed()).thenRun(_ => replyTo ! Okay())
   }
 
-  private def getArtifactRead(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
+  private def getArtifactRead(replyTo: ActorRef[ArtifactReadByUser], currState: CurrState): Effect[ArtifactEvent, CurrState] = {
     replyTo ! ArtifactReadByUser(currState.artifactRead)
     Effect.none
   }
 
-  private def getAritfactInFeed(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
+  private def getAritfactInFeed(replyTo: ActorRef[ArtifactInUserFeed], currState: CurrState): Effect[ArtifactEvent, CurrState] = {
     replyTo ! ArtifactInUserFeed(currState.artifactInUserFeed)
     Effect.none
   }
 
-  private def getArtifactState(replyTo: ActorRef[ArtifactResponse], currState: CurrState): Effect[ArtifactEvent, ArtifactState] = {
+  private def getArtifactState(replyTo: ActorRef[AllStates], currState: CurrState): Effect[ArtifactEvent, CurrState] = {
     replyTo ! AllStates(currState.artifactRead, currState.artifactInUserFeed)
     Effect.none
   }
 
-  private val eventHandler: (ArtifactState, ArtifactEvent) => ArtifactState = { (state, event) =>
-    state match {
-      case currState: CurrState =>
-        event match {
-          case ArtifactRead() =>
-            CurrState(artifactRead = true, artifactInUserFeed = currState.artifactInUserFeed)
+  private val eventHandler: (CurrState, ArtifactEvent) => CurrState = { (state, event) =>
+    event match {
+      case ArtifactRead() =>
+        CurrState(artifactRead = true, artifactInUserFeed = state.artifactInUserFeed)
 
-          case ArtifactAddedToUserFeed() =>
-            CurrState(currState.artifactRead, artifactInUserFeed = true)
+      case ArtifactAddedToUserFeed() =>
+        CurrState(state.artifactRead, artifactInUserFeed = true)
 
-          case ArtifactRemovedFromUserFeed() =>
-            CurrState(currState.artifactRead)
+      case ArtifactRemovedFromUserFeed() =>
+        CurrState(state.artifactRead)
 
-          case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
-        }
       case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
     }
   }
