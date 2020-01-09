@@ -1,14 +1,13 @@
 package com.lightbend.artifactstate.actors
 
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{Behavior, Terminated}
+import akka.actor.typed.{Behavior}
 import akka.cluster.ClusterEvent.{ClusterDomainEvent, MemberRemoved, MemberUp, UnreachableMember}
-import akka.cluster.typed.{Cluster, Subscribe, Unsubscribe}
-
+import akka.cluster.typed.{Cluster, Subscribe}
 
 object ClusterListenerActor {
 
-  def clusterListenerBehavior: Behavior[ClusterDomainEvent] =
+  def apply(): Behavior[ClusterDomainEvent] =
     Behaviors.setup[ClusterDomainEvent] { context =>
 
       val cluster = Cluster(context.system)
@@ -36,13 +35,6 @@ object ClusterListenerActor {
         }
 
       running()
-
-      Behaviors.receiveSignal {
-        case (_, Terminated(_)) =>
-          cluster.subscriptions ! Unsubscribe(context.self.ref)
-          Behaviors.stopped
-      }
     }
-
 
 }

@@ -17,7 +17,7 @@ import akka.remote.testconductor.RoleName
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.ImplicitSender
 import com.lightbend.artifactstate.actors.ArtifactStateEntityActor
-import com.lightbend.artifactstate.actors.ArtifactStateEntityActor.{ARTIFACTSTATES_SHARDNAME, AllStates, ArtifactCommand, ArtifactResponse, CmdArtifactAddedToUserFeed, CmdArtifactRead, CmdArtifactRemovedFromUserFeed, Okay, QryGetAllStates}
+import com.lightbend.artifactstate.actors.ArtifactStateEntityActor.{AllStates, ArtifactCommand, ArtifactResponse, ArtifactStatesShardName, GetAllStates, Okay, SetArtifactAddedToUserFeed, SetArtifactRead, SetArtifactRemovedFromUserFeed}
 import com.lightbend.artifactstate.endpoint.ArtifactStateRoutes
 import com.typesafe.config.ConfigFactory
 import com.lightbend.artifactstate.endpoint.ArtifactStatePocAPI.ArtifactAndUser
@@ -45,11 +45,8 @@ object ArtifactStatesSpec extends MultiNodeConfig {
     akka.cluster.metrics.enabled=off
     akka.actor.allow-java-serialization = on
     akka.actor.warn-about-java-serializer-usage = off
-    akka.actor.serializers {
-      myjson = "com.lightbend.artifactstate.serializer.JsonSerializer"
-    }
     akka.actor.serialization-bindings {
-      "com.lightbend.artifactstate.serializer.EventSerializeMarker" = myjson
+      "com.lightbend.artifactstate.serializer.EventSerializeMarker" = jackson-json
       "com.lightbend.artifactstate.serializer.MsgSerializeMarker" = jackson-json
     }
     akka.persistence {
@@ -61,6 +58,10 @@ object ArtifactStatesSpec extends MultiNodeConfig {
     }
     cassandra-snapshot-store {
       contact-points = ["localhost"]
+    }
+    app {
+      # If ask takes more time than this to complete the request is failed
+      routes.ask-timeout = 5s
     }
     """))
 }
@@ -79,6 +80,8 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
   import akka.http.scaladsl.testkit.RouteTest
   import akka.http.scaladsl.testkit.TestFrameworkInterface
   import akka.http.scaladsl.model._
+  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  import com.lightbend.artifactstate.endpoint.JsonFormats._
 
   abstract class RouteTesting(psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]]) extends ArtifactStateRoutes(typedSystem, psCommandActor) with RouteTest with TestFrameworkInterface
     with ScalaFutures with ScalatestUtils {
@@ -100,21 +103,21 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
   }
 
   def startPersistentSharding(): ActorRef[ShardingEnvelope[ArtifactCommand]] = {
-   val TypeKey = EntityTypeKey[ArtifactCommand](ARTIFACTSTATES_SHARDNAME)
+   val TypeKey = EntityTypeKey[ArtifactCommand](ArtifactStatesShardName)
    val artifactActorSupervisor: ActorRef[ShardingEnvelope[ArtifactCommand]] =
      ClusterSharding(system.toTyped).init(entity = Entity(TypeKey)
-     (createBehavior = ctx => ArtifactStateEntityActor.behavior(ctx.entityId))
+     (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId))
        .withSettings(ClusterShardingSettings(system.toTyped).withRole("sharded")))
    artifactActorSupervisor
   }
 
   def startProxySharding(): ActorRef[ShardingEnvelope[ArtifactCommand]] = {
-    val TypeKey = EntityTypeKey[ArtifactCommand](ARTIFACTSTATES_SHARDNAME)
+    val TypeKey = EntityTypeKey[ArtifactCommand](ArtifactStatesShardName)
     ClusterSharding(system.toTyped).init(Entity(TypeKey)
-      (ctx => ArtifactStateEntityActor.behavior(ctx.entityId)))
+      (ctx => ArtifactStateEntityActor(ctx.entityId)))
   }
 
-  val artifactMember = ArtifactAndUser(1L, "Mike")
+  val artifactMember: ArtifactAndUser = ArtifactAndUser(1L, "Mike")
 
   // fix flakey failure: "Request was neither completed nor rejected within 1 second (DynamicVariable.scala:59)"
   implicit def default(implicit system: ActorSystem): RouteTestTimeout = RouteTestTimeout(5.seconds)
@@ -136,7 +139,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         within(15.seconds) {
           val region = startProxySharding()
           val probe = TestProbe[ArtifactResponse]
-          region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRead(probe.ref, artifactMember.artifactId, artifactMember.userId))
+          region ! ShardingEnvelope(artifactMember.userId, SetArtifactRead(probe.ref, artifactMember.artifactId, artifactMember.userId))
           probe.expectMessage(Okay())
         }
       }
@@ -148,7 +151,7 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
         within(15.seconds) {
           val region = startProxySharding()
           val probe = TestProbe[ArtifactResponse]
-          region ! ShardingEnvelope(artifactMember.userId, CmdArtifactAddedToUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
+          region ! ShardingEnvelope(artifactMember.userId, SetArtifactAddedToUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
           probe.expectMessage(Okay())
         }
       }
@@ -159,11 +162,11 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       runOn(persistNode1) {
         val region = startProxySharding()
         val probe = TestProbe[ArtifactResponse]
-        region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRead(probe.ref, artifactMember.artifactId, artifactMember.userId))
-        region ! ShardingEnvelope(artifactMember.userId, CmdArtifactAddedToUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
+        region ! ShardingEnvelope(artifactMember.userId, SetArtifactRead(probe.ref, artifactMember.artifactId, artifactMember.userId))
+        region ! ShardingEnvelope(artifactMember.userId, SetArtifactAddedToUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
         awaitAssert {
           within(15.seconds) {
-            region ! ShardingEnvelope(artifactMember.userId, QryGetAllStates(probe.ref, artifactMember.artifactId, artifactMember.userId))
+            region ! ShardingEnvelope(artifactMember.userId, GetAllStates(probe.ref, artifactMember.artifactId, artifactMember.userId))
             probe.expectMessage(AllStates(artifactRead = true, artifactInUserFeed = true))
           }
         }
@@ -176,10 +179,10 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
       runOn(persistNode2) {
         val region = startProxySharding()
         val probe = TestProbe[ArtifactResponse]
-        region ! ShardingEnvelope(artifactMember.userId, CmdArtifactRemovedFromUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
+        region ! ShardingEnvelope(artifactMember.userId, SetArtifactRemovedFromUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
         awaitAssert {
           within(15.seconds) {
-            region ! ShardingEnvelope(artifactMember.userId, QryGetAllStates(probe.ref, artifactMember.artifactId, artifactMember.userId))
+            region ! ShardingEnvelope(artifactMember.userId, GetAllStates(probe.ref, artifactMember.artifactId, artifactMember.userId))
             probe.expectMessage(AllStates(artifactRead = true, artifactInUserFeed = false))
           }
         }

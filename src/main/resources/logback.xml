@@ -1,24 +1,34 @@
 <configuration>
     <!--For more information on customizing logging: https://logback.qos.ch/manual/configuration.html-->
+
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
+            <!-- Nice with docker is the -->
             <pattern>%date{ISO8601} %-5level %logger{36} [%X{sourceThread}] - %msg%n</pattern>
         </encoder>
     </appender>
 
-<!-- only enable this when working locally
-    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>${application.home:-.}/logs/info.log</file>
-        <append>false</append>
+    <!-- only enable this when working locally
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>target/myapp.log</file>
+        <immediateFlush>false</immediateFlush>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>myapp_%d{yyyy-MM-dd}.log</fileNamePattern>
+        </rollingPolicy>
         <encoder>
-            <pattern>%date{ISO8601} %-5level %logger{36} [%X{sourceThread}] - %msg%n</pattern>
+            <pattern>[%date{ISO8601}] [%level] [%logger] [%marker] [%thread] - %msg {%mdc}%n</pattern>
         </encoder>
+    </appender>
+
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>8192</queueSize>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="FILE" />
     </appender>
 -->
 
     <root level="INFO">
-        <appender-ref ref="STDOUT" />
-<!--        <appender-ref ref="FILE" /> -->
+        <appender-ref ref="STDOUT"/>
+<!--        <appender-ref ref="ASYNC"/>-->
     </root>
-
 </configuration>
