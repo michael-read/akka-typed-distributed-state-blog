@@ -39,6 +39,7 @@ object StartNode {
   private object RootBehavior {
     def apply(port: Int, defaultPort: Int) : Behavior[NotUsed] =
       Behaviors.setup { context =>
+        implicit val classicSystem: actor.ActorSystem =  TypedActorSystemOps(context.system).toClassic
 
         val TypeKey = EntityTypeKey[ArtifactCommand](ArtifactStatesShardName)
 
@@ -46,7 +47,6 @@ object StartNode {
         context.log.info(s"starting node with roles: $cluster.selfMember.roles")
 
         if (cluster.selfMember.hasRole("k8s")) {
-          val classicSystem = TypedActorSystemOps(context.system).toClassic
           AkkaManagement(classicSystem).start()
           ClusterBootstrap(classicSystem).start()
         }
@@ -58,11 +58,7 @@ object StartNode {
         }
         else {
           if (cluster.selfMember.hasRole("endpoint")) {
-            implicit val classicSystem: actor.ActorSystem =  TypedActorSystemOps(context.system).toClassic
-
             implicit val ec: ExecutionContextExecutor = context.system.executionContext
-            implicit val scheduler: Scheduler = context.system.scheduler
-
             val psEntities: ActorRef[ShardingEnvelope[ArtifactCommand]] =
               ClusterSharding(context.system).init(Entity(TypeKey)
               (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId)))
