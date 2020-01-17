@@ -35,13 +35,6 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
       case _ =>
         ExtResponse(req.artifactId, req.userId, None, Some("Internal Query Error: this shouldn't happen."))
     }
-/*
-      .recover {
-      case ex: Exception =>
-        system.log.error(ex.getMessage, ex)
-        ExtResponse(req.artifactId, req.userId, None, Some(ex.getMessage))
-    }
-*/
   }
 
   def queryArtifactRead(req: ArtifactAndUser): Future[ExtResponse] = {

@@ -41,12 +41,6 @@ spec:
                 fieldPath: status.podIP
         - name: CASSANDRA_CONTACT_POINT1
           value: "cassandra-db"
-        - name: CINNAMON_ELASTIC_HOSTS
-          value: "elasticsearch.lightbend:9200"
-        - name: CINNAMON_ELASTIC_USERNAME
-          value: "elastic"
-        - name: CINNAMON_ELASTIC_PASSWORD
-          value: "changeme"
         - name: JAVA_OPTS
           value: "-Dconfig.resource=cluster-application-k8s.conf"
         ports:
