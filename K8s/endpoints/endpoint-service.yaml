@@ -10,10 +10,10 @@ spec:
       port: 8082
       targetPort: 8082
       nodePort: 30082
-  #  - name: akka-mgmt-http
-  #    protocol: TCP
-  #    port: 8558
-  #    targetPort: akka-mgmt-http
-  #    nodePort: 30558
+    - name: akka-mgmt-http
+      protocol: TCP
+      port: 8558
+      targetPort: akka-mgmt-http
+      nodePort: 30559
   selector:
     tag: endpoint

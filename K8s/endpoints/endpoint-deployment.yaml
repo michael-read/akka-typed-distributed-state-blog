@@ -22,8 +22,6 @@ spec:
       - env:
         - name: CASSANDRA_CONTACT_POINT1
           value: cassandra-db
-        - name: CINNAMON_ELASTIC_HOSTS
-          value: elasticsearch.lightbend:9200
         - name: JAVA_OPTS
           value: "-Dconfig.resource=endpoint-application-k8s.conf"
         image: akka-typed-blog-distributed-state/cluster:0.1.0
