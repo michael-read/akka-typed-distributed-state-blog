@@ -1,3 +1,4 @@
+import com.lightbend.cinnamon.sbt.Cinnamon.CinnamonKeys.cinnamon
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 
