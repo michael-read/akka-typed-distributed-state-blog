@@ -15,12 +15,16 @@ version in ThisBuild := "0.1.0"
 organization in ThisBuild := "com.lightbend"
 scalaVersion in ThisBuild := "2.13.1"
 
-credentials in ThisBuild += Credentials(Path.userHome / ".lightbend" / "commercial.credentials")
+val credentialFile = Path.userHome / ".lightbend" / "commercial.credentials"
+
+credentials in ThisBuild += Credentials(credentialFile)
 resolvers in ThisBuild += "lightbend-commercial-maven" at "https://repo.lightbend.com/commercial-releases"
 
 def doesCredentialExist : Boolean = {
-  import java.nio.file.{Paths, Files}
-  Files.exists(Paths.get(credentials.toString()))
+  import java.nio.file.Files
+  val exists = Files.exists(credentialFile.toPath)
+  println(s"doesCredentialExist: ($credentialFile) " + exists)
+  exists
 }
 
 def commercialDependencies : Seq[ModuleID] = {
@@ -83,7 +87,7 @@ def ossDependencies : Seq[ModuleID] = {
 lazy val root = (project in file("."))
   .enablePlugins(DockerPlugin)
   .enablePlugins(JavaAppPackaging)
-//  .enablePlugins(Cinnamon) // NOTE: this requires a commercial Lightbend Subscription
+  .enablePlugins(if (doesCredentialExist) Cinnamon else Plugins.empty) // NOTE: Cinnamon requires a commercial Lightbend Subscription
   .enablePlugins(MultiJvmPlugin).configs(MultiJvm)
   .settings(multiJvmSettings: _*)
   .settings(
@@ -106,6 +110,11 @@ lazy val root = (project in file("."))
     dockerExposedPorts ++= Seq(9200)
   )
 
-cinnamon := false
-//cinnamon in run := true
-//cinnamon in test := false
+if (doesCredentialExist) {
+  cinnamon in run := true
+  cinnamon in test := false
+}
+else {
+  cinnamon := false
+}
+
