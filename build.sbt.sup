@@ -1,8 +1,14 @@
+import com.lightbend.cinnamon.sbt.Cinnamon.CinnamonKeys.cinnamon
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
+//import sbt.Keys.fork
+//import sbt.Resolver
+
+credentials in ThisBuild += Credentials(Path.userHome / ".lightbend" / "commercial.credentials")
+resolvers in ThisBuild += "lightbend-commercial-maven" at "https://repo.lightbend.com/commercial-releases"
 
 lazy val akkaHttpVersion = "10.1.10"
-lazy val akkaVersion     = "2.6.3"
+lazy val akkaVersion     = "2.6.1"
 lazy val logbackVersion  = "1.2.3"
 lazy val akkaManagementVersion = "1.0.5"
 lazy val akkaCassandraVersion  = "0.102"
@@ -18,12 +24,28 @@ scalaVersion in ThisBuild := "2.13.1"
 lazy val root = (project in file("."))
   .enablePlugins(DockerPlugin)
   .enablePlugins(JavaAppPackaging)
+  .enablePlugins(Cinnamon)  // NOTE: this requires a commercial Lightbend Subscription
   .enablePlugins(MultiJvmPlugin).configs(MultiJvm)
   .settings(multiJvmSettings: _*)
   .settings(
     dockerBaseImage := "adoptopenjdk/openjdk8",
     packageName in Docker := "akka-typed-blog-distributed-state/cluster",
     libraryDependencies ++= Seq(
+      // BEGIN: this requires a commercial Lightbend Subscription
+      Cinnamon.library.cinnamonAkkaHttp,
+      Cinnamon.library.cinnamonAkka,
+      Cinnamon.library.cinnamonAkkaPersistence,
+      Cinnamon.library.cinnamonJvmMetricsProducer,
+      Cinnamon.library.cinnamonCHMetrics3,
+      Cinnamon.library.cinnamonCHMetricsElasticsearchReporter,
+      Cinnamon.library.cinnamonSlf4jEvents,
+      Cinnamon.library.cinnamonPrometheus,
+      Cinnamon.library.cinnamonPrometheusHttpServer,
+      Cinnamon.library.jmxImporter,
+      "com.lightbend.akka" %% "akka-split-brain-resolver" % akkaSplitBrainVersion,
+      "com.lightbend.akka" %% "akka-diagnostics" % akkaDiagnosticsVersion,
+      // END: this requires a commercial Lightbend Subscription
+
       "com.typesafe.akka" %% "akka-remote" % akkaVersion,
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
 
@@ -69,3 +91,5 @@ lazy val root = (project in file("."))
     dockerBaseImage := "openjdk:8-slim",
     dockerExposedPorts ++= Seq(9200)
   )
+cinnamon in run := true
+cinnamon in test := false
