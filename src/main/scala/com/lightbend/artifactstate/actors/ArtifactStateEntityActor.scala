@@ -37,7 +37,7 @@ object ArtifactStateEntityActor {
 
   // events
   sealed trait ArtifactEvent extends EventSerializeMarker
-  final case class ArtifactRead() extends ArtifactEvent
+  final case class ArtifactRead(mark: String) extends ArtifactEvent
   final case class ArtifactAddedToUserFeed() extends ArtifactEvent
   final case class ArtifactRemovedFromUserFeed() extends ArtifactEvent
 
@@ -63,7 +63,7 @@ object ArtifactStateEntityActor {
   }
 
   private def artifactRead(replyTo: ActorRef[Okay], currState: CurrState): Effect[ArtifactEvent, CurrState] = {
-    Effect.persist(ArtifactRead()).thenRun(_ => replyTo ! Okay())
+    Effect.persist(ArtifactRead("Mike was here")).thenRun(_ => replyTo ! Okay())
   }
 
   private def artifactAddedToUserFeed(replyTo: ActorRef[Okay], currState: CurrState): Effect[ArtifactEvent, CurrState] = {
@@ -91,7 +91,7 @@ object ArtifactStateEntityActor {
 
   private val eventHandler: (CurrState, ArtifactEvent) => CurrState = { (state, event) =>
     event match {
-      case ArtifactRead() =>
+      case ArtifactRead(mark) =>
         CurrState(artifactRead = true, artifactInUserFeed = state.artifactInUserFeed)
 
       case ArtifactAddedToUserFeed() =>
