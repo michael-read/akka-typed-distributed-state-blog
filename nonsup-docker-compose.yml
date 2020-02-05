@@ -1,0 +1,75 @@
+version: '3'
+services:
+  cassandra-db:
+    hostname: cassandra-1
+    image: cassandra:latest
+    command: /bin/bash -c "sleep 1 && echo ' -- Pausing to let system catch up ... -->' && /docker-entrypoint.sh cassandra -f"
+    ports:
+      - "7000:7000"
+      - "7001:7001"
+      - "7199:7199"
+      - "9042:9042"
+      - "9160:9160"
+#    volumes:
+#    - ./data/cassandra-1:/var/lib/cassandra:rw
+    networks:
+    - statepoc
+    healthcheck:
+      test: ["CMD", "cqlsh", "-u cassandra", "-p cassandra" ,"-e describe keyspaces"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  seed:
+    image: akka-typed-blog-distributed-state/cluster:0.1.0
+    links:
+    - cassandra-db
+    depends_on:
+    - cassandra-db
+    expose:
+    - 1600
+    environment:
+      JAVA_OPTS: "-Dconfig.resource=nonsup-cluster-application-docker.conf"
+      CLUSTER_IP: seed
+      CLUSTER_PORT: 1600
+      SEED_PORT_1600_TCP_ADDR: seed
+      CASSANDRA_CONTACT_POINT1: cassandra-db
+      CINNAMON_ELASTIC_HOSTS: elasticsearch:9200
+    networks:
+    - statepoc
+
+  cluster:
+    image: akka-typed-blog-distributed-state/cluster:0.1.0
+    links:
+    - cassandra-db
+    depends_on:
+    - cassandra-db
+    environment:
+      JAVA_OPTS: "-Dconfig.resource=nonsup-cluster-application-docker.conf"
+      CLUSTER_IP: cluster
+      CLUSTER_PORT: 0
+      SEED_PORT_1600_TCP_ADDR: seed
+      CASSANDRA_CONTACT_POINT1: cassandra-db
+      CINNAMON_ELASTIC_HOSTS: elasticsearch:9200
+    networks:
+    - statepoc
+
+  endpoint:
+    image: akka-typed-blog-distributed-state/cluster:0.1.0
+    environment:
+      JAVA_OPTS: "-Dconfig.resource=nonsup-endpoint-application-docker.conf"
+      CLUSTER_IP: endpoint
+      CLUSTER_PORT: 0
+      SEED_PORT_1600_TCP_ADDR: seed
+      CINNAMON_ELASTIC_HOSTS: elasticsearch:9200
+    depends_on:
+    - seed
+    ports:
+    - "8082:8082"
+    - "8558:8558"
+    networks:
+    - statepoc
+
+networks:
+  statepoc:
+    driver: bridge

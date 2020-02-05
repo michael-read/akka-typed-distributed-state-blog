@@ -76,7 +76,6 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
     }.recover {
       case ex: Exception =>
         system.log.error(ex.getMessage, ex)
-        ex.getMessage
         CommandResponse(false)
     }
   }
