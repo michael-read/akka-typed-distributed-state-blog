@@ -22,14 +22,18 @@ spec:
         image: image-registry.openshift-image-registry.svc:5000/poc/cluster:latest
         imagePullPolicy: IfNotPresent
         #health
-        livenessProbe:
-          httpGet:
-            path: /alive
-            port: akka-mgmt-http
         readinessProbe:
           httpGet:
             path: /ready
             port: akka-mgmt-http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /alive
+            port: akka-mgmt-http
+          initialDelaySeconds: 90
+          periodSeconds: 30
         #health
         env:
         - name: HOSTNAME

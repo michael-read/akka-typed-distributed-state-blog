@@ -3,9 +3,9 @@ import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 
 lazy val akkaHttpVersion = "10.1.10"
-lazy val akkaVersion     = "2.6.3"
+lazy val akkaVersion     = "2.6.4"
 lazy val logbackVersion  = "1.2.3"
-lazy val akkaManagementVersion = "1.0.5"
+lazy val akkaManagementVersion = "1.0.6"
 lazy val akkaCassandraVersion  = "0.102"
 lazy val jacksonVersion  = "3.6.6"
 lazy val akkaDiagnosticsVersion = "1.1.12"

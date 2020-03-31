@@ -22,14 +22,18 @@ spec:
         image: akka-typed-blog-distributed-state/cluster:0.1.0
         imagePullPolicy: IfNotPresent
         #health
-        livenessProbe:
-          httpGet:
-            path: /alive
-            port: akka-mgmt-http
         readinessProbe:
           httpGet:
             path: /ready
             port: akka-mgmt-http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /alive
+            port: akka-mgmt-http
+          initialDelaySeconds: 90
+          periodSeconds: 30
         #health
         env:
         - name: HOSTNAME

@@ -8,5 +8,4 @@ roleRef:
   name: akka-cluster-member
 subjects:
 - kind: ServiceAccount
-  namespace: default
   name: endpoints-sa
