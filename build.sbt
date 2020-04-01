@@ -8,8 +8,7 @@ lazy val logbackVersion  = "1.2.3"
 lazy val akkaManagementVersion = "1.0.6"
 lazy val akkaCassandraVersion  = "0.102"
 lazy val jacksonVersion  = "3.6.6"
-lazy val akkaDiagnosticsVersion = "1.1.12"
-lazy val akkaSplitBrainVersion = "1.1.12"
+lazy val akkaEnhancementsVersion = "1.1.13"
 
 name := "akka-typed-blog-distributed-state"
 version in ThisBuild := "0.1.0"
@@ -42,8 +41,8 @@ def commercialDependencies : Seq[ModuleID] = {
     Cinnamon.library.cinnamonPrometheus,
     Cinnamon.library.cinnamonPrometheusHttpServer,
     Cinnamon.library.jmxImporter,
-    "com.lightbend.akka" %% "akka-split-brain-resolver" % akkaSplitBrainVersion,
-    "com.lightbend.akka" %% "akka-diagnostics" % akkaDiagnosticsVersion,
+    "com.lightbend.akka" %% "akka-split-brain-resolver" % akkaEnhancementsVersion,
+    "com.lightbend.akka" %% "akka-diagnostics" % akkaEnhancementsVersion,
     // END: this requires a commercial Lightbend Subscription
   )
 }
