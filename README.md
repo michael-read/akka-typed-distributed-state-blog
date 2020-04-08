@@ -1,4 +1,5 @@
-#How To Distribute Application State with Akka Cluster
+![Akka Cluster](Blog_Model.png)
+# How To Distribute Application State with Akka Cluster
 
 Building, testing, containerizing, deploying, and monitoring distributed microservices is difficult, but using Lightbend technologies can make it a lot faster and easier to be successful.
 In this four part blog series, we walk you through a working Proof of Concept (PoC) built using Lightbend’s open source distributed toolkit, Akka. This PoC delivers a resilient, highly performant, elastic, distributed, and consistent state solution that provides an automatic in memory cache with a persistent backing. Here is the breakdown:
