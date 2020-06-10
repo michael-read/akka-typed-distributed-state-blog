@@ -2,10 +2,10 @@ import com.lightbend.cinnamon.sbt.Cinnamon.CinnamonKeys.cinnamon
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 
-lazy val akkaHttpVersion = "10.1.10"
-lazy val akkaVersion     = "2.6.4"
+lazy val akkaHttpVersion = "10.1.12"
+lazy val akkaVersion     = "2.6.6"
 lazy val logbackVersion  = "1.2.3"
-lazy val akkaManagementVersion = "1.0.6"
+lazy val akkaManagementVersion = "1.0.8"
 lazy val akkaCassandraVersion  = "0.102"
 lazy val jacksonVersion  = "3.6.6"
 lazy val akkaEnhancementsVersion = "1.1.13"
@@ -41,7 +41,7 @@ def commercialDependencies : Seq[ModuleID] = {
     Cinnamon.library.cinnamonPrometheus,
     Cinnamon.library.cinnamonPrometheusHttpServer,
     Cinnamon.library.jmxImporter,
-    "com.lightbend.akka" %% "akka-split-brain-resolver" % akkaEnhancementsVersion,
+//  "com.lightbend.akka" %% "akka-split-brain-resolver" % akkaEnhancementsVersion, // now part of OSS Akka version 2.6.6
     "com.lightbend.akka" %% "akka-diagnostics" % akkaEnhancementsVersion,
     // END: this requires a commercial Lightbend Subscription
   )
