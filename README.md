@@ -15,4 +15,4 @@ In honor of Lightbend’s release of Akka’s Split Brain Resolver as OSS, I’v
 
 For more information on Akka Split Brain Resolver please see the announcement here → https://akka.io/blog/news/2020/06/08/akka-2.6.6-released-split-brain-resolver
 
-Also, Patrik Nordwall’s video on Split Brain Resolver is really great in helping you why you should care → https://akka.io/blog/news/2020/06/08/akka-split-brain-resolver-video
+Also, Patrik Nordwall’s video on Split Brain Resolver is really great in helping you understand why you should care → https://akka.io/blog/news/2020/06/08/akka-split-brain-resolver-video
