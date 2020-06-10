@@ -81,6 +81,9 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
   import akka.http.scaladsl.testkit.TestFrameworkInterface
   import akka.http.scaladsl.model._
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  import akka.http.scaladsl.model.StatusCodes
+  import akka.http.scaladsl.server.Directives._
+  import akka.http.scaladsl.server.ExceptionHandler
   import com.lightbend.artifactstate.endpoint.JsonFormats._
 
   abstract class RouteTesting(psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]]) extends ArtifactStateRoutes(typedSystem, psCommandActor) with RouteTest with TestFrameworkInterface
@@ -88,7 +91,11 @@ class ArtifactStatesSpec extends MultiNodeSpec(ArtifactStatesSpec)
 
     override protected def createActorSystem(): akka.actor.ActorSystem = typedSystem.toClassic
     override def failTest(msg: String): Nothing = throw new TestFailedException(msg, 11)
-
+    def testExceptionHandler = ExceptionHandler {
+      case e =>
+        e.printStackTrace()
+        complete((StatusCodes.InternalServerError, e.getLocalizedMessage))
+    }
     lazy val routes: Route = psRoutes
   }
 
