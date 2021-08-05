@@ -22,7 +22,7 @@ spec:
       - env:
         - name: JAVA_OPTS
           value: "-Dconfig.resource=endpoint-application-k8s.conf"
-        image: akka-typed-blog-distributed-state/cluster:0.1.1
+        image: akka-typed-blog-distributed-state/cluster:0.1.2
         #health
         readinessProbe:
           httpGet:

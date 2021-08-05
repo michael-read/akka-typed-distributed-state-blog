@@ -11,7 +11,7 @@ lazy val jacksonVersion  = "3.6.6"
 lazy val akkaEnhancementsVersion = "1.1.16"
 
 name := "akka-typed-blog-distributed-state"
-ThisBuild / version := "0.1.1"
+ThisBuild / version := "0.1.2"
 ThisBuild / organization := "com.lightbend"
 ThisBuild / scalaVersion := "2.13.6"
 

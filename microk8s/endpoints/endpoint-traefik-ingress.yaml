@@ -15,10 +15,3 @@ spec:
                 name: endpoint
                 port:
                   number: 8082
-          - path: /endpoint-akka-mgmt
-            pathType: Prefix
-            backend:
-              service:
-                name: endpoint
-                port:
-                  number: 8558

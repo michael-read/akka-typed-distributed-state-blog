@@ -8,7 +8,7 @@ spec:
   rules:
     - http:
         paths:
-          - path: /node-akka-mgmt
+          - path: /cluster
             pathType: Prefix
             backend:
               service:

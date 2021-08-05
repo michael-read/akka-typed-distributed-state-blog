@@ -18,7 +18,7 @@ spec:
       serviceAccountName: nodes-sa
       containers:
       - name: node
-        image: akka-typed-blog-distributed-state/cluster:0.1.1
+        image: akka-typed-blog-distributed-state/cluster:0.1.2
         #health
         readinessProbe:
           httpGet:
