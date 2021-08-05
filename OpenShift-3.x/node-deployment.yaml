@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: node
-        image: akka-typed-blog-distributed-state/cluster:0.1.0
+        image: akka-typed-blog-distributed-state/cluster:0.1.2
         imagePullPolicy: IfNotPresent
         #health
         readinessProbe:

@@ -1,28 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: endpoint
+  name: node
 spec:
-  replicas: 1
+  replicas: 3
   selector:
-    matchLabels:
-      app: endpoint
-  strategy: {}
+     matchLabels:
+       app: ArtifactStateCluster
   template:
     metadata:
-      creationTimestamp: null
       labels:
-        app: endpoint
-        tag: endpoint
+        app: ArtifactStateCluster
+        tag: clusternode
       annotations:
         prometheus.io/scrape: 'true'
     spec:
-      serviceAccountName: endpoints-sa
+      serviceAccountName: nodes-sa
       containers:
-      - env:
-        - name: JAVA_OPTS
-          value: "-Dconfig.resource=endpoint-application-k8s.conf"
-        image: akka-typed-blog-distributed-state/cluster:0.1.2
+      - name: node
+        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.2
         #health
         readinessProbe:
           httpGet:
@@ -37,9 +33,17 @@ spec:
           initialDelaySeconds: 90
           periodSeconds: 30
         #health
-        name: endpoint
+        env:
+        - name: HOSTNAME
+          valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+        - name: CASSANDRA_CONTACT_POINT1
+          value: "cassandra-db:9042"
+        - name: JAVA_OPTS
+          value: "-Dconfig.resource=cluster-application-k8s.conf"
         ports:
-        - containerPort: 8082
         # akka remoting
         - name: remoting
           containerPort: 2552
@@ -50,6 +54,5 @@ spec:
           protocol: TCP
         - name: node-metrics
           containerPort: 9001
-        resources: {}
       restartPolicy: Always
-status: {}
+

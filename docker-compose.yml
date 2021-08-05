@@ -21,7 +21,7 @@ services:
       retries: 10
 
   seed:
-    image: akka-typed-blog-distributed-state/cluster:0.1.0
+    image: akka-typed-blog-distributed-state/cluster:0.1.1
     links:
     - cassandra-db
     depends_on:
@@ -33,14 +33,14 @@ services:
       CLUSTER_IP: seed
       CLUSTER_PORT: 1600
       SEED_PORT_1600_TCP_ADDR: seed
-      CASSANDRA_CONTACT_POINT1: cassandra-db
+      CASSANDRA_CONTACT_POINT1: cassandra-db:9042
       CINNAMON_ELASTIC_HOSTS: elasticsearch:9200
     networks:
-    - cinnamon-elasticsearch-docker-sandbox-2122_sandbox
+    - cinnamon-elasticsearch-docker-sandbox-2160_sandbox
     - statepoc
 
   cluster:
-    image: akka-typed-blog-distributed-state/cluster:0.1.0
+    image: akka-typed-blog-distributed-state/cluster:0.1.1
     links:
     - cassandra-db
     depends_on:
@@ -50,14 +50,14 @@ services:
       CLUSTER_IP: cluster
       CLUSTER_PORT: 0
       SEED_PORT_1600_TCP_ADDR: seed
-      CASSANDRA_CONTACT_POINT1: cassandra-db
+      CASSANDRA_CONTACT_POINT1: cassandra-db:9042
       CINNAMON_ELASTIC_HOSTS: elasticsearch:9200
     networks:
-    - cinnamon-elasticsearch-docker-sandbox-2122_sandbox
+    - cinnamon-elasticsearch-docker-sandbox-2160_sandbox
     - statepoc
 
   endpoint:
-    image: akka-typed-blog-distributed-state/cluster:0.1.0
+    image: akka-typed-blog-distributed-state/cluster:0.1.1
     environment:
       JAVA_OPTS: "-Dconfig.resource=endpoint-application-docker.conf"
       CLUSTER_IP: endpoint
@@ -70,12 +70,12 @@ services:
     - "8082:8082"
     - "8558:8558"
     networks:
-    - cinnamon-elasticsearch-docker-sandbox-2122_sandbox
+    - cinnamon-elasticsearch-docker-sandbox-2160_sandbox
     - statepoc
 
 networks:
   #Note: this network name must match the version of the sandbox
-  cinnamon-elasticsearch-docker-sandbox-2122_sandbox:
+  cinnamon-elasticsearch-docker-sandbox-2160_sandbox:
     external: true
 
   statepoc:

@@ -2,23 +2,23 @@ import com.lightbend.cinnamon.sbt.Cinnamon.CinnamonKeys.cinnamon
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 
-lazy val akkaHttpVersion = "10.1.12"
-lazy val akkaVersion     = "2.6.6"
+lazy val akkaHttpVersion = "10.2.5"
+lazy val akkaVersion     = "2.6.15"
 lazy val logbackVersion  = "1.2.3"
-lazy val akkaManagementVersion = "1.0.8"
-lazy val akkaCassandraVersion  = "0.102"
+lazy val akkaManagementVersion = "1.1.1"
+lazy val akkaCassandraVersion  = "1.0.5"
 lazy val jacksonVersion  = "3.6.6"
-lazy val akkaEnhancementsVersion = "1.1.13"
+lazy val akkaEnhancementsVersion = "1.1.16"
 
 name := "akka-typed-blog-distributed-state"
-version in ThisBuild := "0.1.0"
-organization in ThisBuild := "com.lightbend"
-scalaVersion in ThisBuild := "2.13.1"
+ThisBuild / version := "0.1.2"
+ThisBuild / organization := "com.lightbend"
+ThisBuild / scalaVersion := "2.13.6"
 
-val credentialFile = Path.userHome / ".lightbend" / "commercial.credentials"
-
-credentials in ThisBuild += Credentials(credentialFile)
-resolvers in ThisBuild += "lightbend-commercial-maven" at "https://repo.lightbend.com/commercial-releases"
+// we're relying on the new credential file format for hold_lightbend.sbt as described
+//  here -> https://www.lightbend.com/account/lightbend-platform/credentials, which
+//  requires a commercial Lightbend Subscription.
+val credentialFile = file("./lightbend.sbt")
 
 def doesCredentialExist : Boolean = {
   import java.nio.file.Files
@@ -41,7 +41,6 @@ def commercialDependencies : Seq[ModuleID] = {
     Cinnamon.library.cinnamonPrometheus,
     Cinnamon.library.cinnamonPrometheusHttpServer,
     Cinnamon.library.jmxImporter,
-//  "com.lightbend.akka" %% "akka-split-brain-resolver" % akkaEnhancementsVersion, // now part of OSS Akka version 2.6.6
     "com.lightbend.akka" %% "akka-diagnostics" % akkaEnhancementsVersion,
     // END: this requires a commercial Lightbend Subscription
   )
@@ -87,35 +86,34 @@ def ossDependencies : Seq[ModuleID] = {
 lazy val root = (project in file("."))
   .enablePlugins(DockerPlugin)
   .enablePlugins(JavaAppPackaging)
-  .enablePlugins(if (doesCredentialExist) Cinnamon else Plugins.empty) // NOTE: Cinnamon requires a commercial Lightbend Subscription
+  .enablePlugins(if (doesCredentialExist.booleanValue()) Cinnamon else Plugins.empty) // NOTE: Cinnamon requires a commercial Lightbend Subscription
   .enablePlugins(MultiJvmPlugin).configs(MultiJvm)
   .settings(multiJvmSettings: _*)
   .settings(
-    dockerBaseImage := "adoptopenjdk/openjdk8",
-    packageName in Docker := "akka-typed-blog-distributed-state/cluster",
+//    dockerBaseImage := "adoptopenjdk/openjdk8",
+    Docker / packageName := "akka-typed-blog-distributed-state/cluster",
     libraryDependencies ++= {
-      if (doesCredentialExist) {
+      if (doesCredentialExist.booleanValue()) {
         commercialDependencies ++ ossDependencies
       }
       else {
         ossDependencies
       }
     },
-    javaOptions in Universal ++= Seq(
+    Universal / javaOptions ++= Seq(
       "-Dcom.sun.management.jmxremote.port=8090 -Dcom.sun.management.jmxremote.rmi.port=8090 -Djava.rmi.server.hostname=127.0.0.1 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
     )
   )
   .settings(
-    dockerBaseImage := "openjdk:8-slim",
+    dockerBaseImage := "openjdk:11-slim",
     dockerExposedPorts ++= Seq(9200)
   )
 
-if (doesCredentialExist) {
-  cinnamon in run := true
-  cinnamon in test := false
-}
-else {
-  cinnamon := false
-}
+/*
+  cinnamon := { if (doesCredentialExist.booleanValue()) true else false }
+  run / cinnamon  := { if (doesCredentialExist.booleanValue()) true else false }
+*/
+
+run / cinnamon  := true
 
 fork := true

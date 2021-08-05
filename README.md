@@ -9,6 +9,20 @@ In this four part blog series, we walk you through a working Proof of Concept (P
 - [Part 4](https://www.lightbend.com/blog/how-to-distribute-application-state-with-akka-cluster-part-4-the-source-code) - Source Code: In our final installment, we do a deep dive into our Scala source code.
  	
 ----------------
+## Update: August, 5, 2021
+- Upgraded all versions of the Lightbend stack's dependencies to the currently released versions.
+  * The biggest change revolves around the change of the `akka-persistence-cassandra` (v0.102 -> v1.0.5), which requires a migration in tables and configuration.
+  * Scala: v2.13.1 -> v2.13.6
+  * Sbt v1.3.9 -> v1.5.5    
+  * Akka: v2.6.6 -> v2.6.15
+  * Akka Http: v10.1.12 -> v10.2.5
+  * Akka Management v1.0.8 -> v1.1.1
+  * Lightbend Telemetry -> v2.14.0 -> v2.16.1
+  * Java: v8 -> v11    
+    
+- Microk8s - tested locally on Microk8s, please see [microk8s/README.md](microk8s/README.md) for more information.
+- locked in to cassandra image to: v3.11.11
+
 ## Update: June, 10, 2020
 
 In honor of Lightbend’s release of Akka’s Split Brain Resolver as OSS, I’ve updated this repository to take advantage of Akka 2.6.6.

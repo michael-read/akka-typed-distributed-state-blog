@@ -1,8 +1,10 @@
 *.class
 .idea
+.bsp
 target/
 project/target
 akka-diagnostics/
 logs
 #cassandra volume
 data/cassandra-1/
+lightbend.sbt
