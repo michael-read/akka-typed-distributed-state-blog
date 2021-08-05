@@ -50,14 +50,23 @@ object ArtifactStatesSpec extends MultiNodeConfig {
       "com.lightbend.artifactstate.serializer.MsgSerializeMarker" = jackson-json
     }
     akka.persistence {
-      journal.plugin = "cassandra-journal"
-      snapshot-store.plugin = "cassandra-snapshot-store"
+      journal.plugin = "akka.persistence.cassandra.journal"
+      snapshot-store.plugin = "akka.persistence.cassandra.snapshot"
     }
-    cassandra-journal {
-      contact-points = ["localhost"]
+    akka.persistence.cassandra {
+      journal {
+        keyspace-autocreate = true
+        tables-autocreate = true
+      }
+      snapshot {
+        keyspace-autocreate = true
+        tables-autocreate = true
+      }
     }
-    cassandra-snapshot-store {
-      contact-points = ["localhost"]
+    datastax-java-driver {
+      advanced.reconnect-on-init = true
+      basic.contact-points = ["localhost:9042"]
+      basic.load-balancing-policy.local-datacenter = "datacenter1"
     }
     app {
       # If ask takes more time than this to complete the request is failed

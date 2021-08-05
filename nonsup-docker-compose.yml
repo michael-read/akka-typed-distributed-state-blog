@@ -21,7 +21,7 @@ services:
       retries: 10
 
   seed:
-    image: akka-typed-blog-distributed-state/cluster:0.1.0
+    image: akka-typed-blog-distributed-state/cluster:0.1.1
     links:
     - cassandra-db
     depends_on:
@@ -33,13 +33,12 @@ services:
       CLUSTER_IP: seed
       CLUSTER_PORT: 1600
       SEED_PORT_1600_TCP_ADDR: seed
-      CASSANDRA_CONTACT_POINT1: cassandra-db
-      CINNAMON_ELASTIC_HOSTS: elasticsearch:9200
+      CASSANDRA_CONTACT_POINT1: cassandra-db:9042
     networks:
     - statepoc
 
   cluster:
-    image: akka-typed-blog-distributed-state/cluster:0.1.0
+    image: akka-typed-blog-distributed-state/cluster:0.1.1
     links:
     - cassandra-db
     depends_on:
@@ -49,19 +48,17 @@ services:
       CLUSTER_IP: cluster
       CLUSTER_PORT: 0
       SEED_PORT_1600_TCP_ADDR: seed
-      CASSANDRA_CONTACT_POINT1: cassandra-db
-      CINNAMON_ELASTIC_HOSTS: elasticsearch:9200
+      CASSANDRA_CONTACT_POINT1: cassandra-db:9042
     networks:
     - statepoc
 
   endpoint:
-    image: akka-typed-blog-distributed-state/cluster:0.1.0
+    image: akka-typed-blog-distributed-state/cluster:0.1.1
     environment:
       JAVA_OPTS: "-Dconfig.resource=nonsup-endpoint-application-docker.conf"
       CLUSTER_IP: endpoint
       CLUSTER_PORT: 0
       SEED_PORT_1600_TCP_ADDR: seed
-      CINNAMON_ELASTIC_HOSTS: elasticsearch:9200
     depends_on:
     - seed
     ports:

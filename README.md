@@ -9,6 +9,12 @@ In this four part blog series, we walk you through a working Proof of Concept (P
 - [Part 4](https://www.lightbend.com/blog/how-to-distribute-application-state-with-akka-cluster-part-4-the-source-code) - Source Code: In our final installment, we do a deep dive into our Scala source code.
  	
 ----------------
+## Update: August, ??, 2021
+- Upgraded all versions of the Lightbend stack's dependencies to the currently released versions.
+- Tested on Java 11  
+- Microk8s - tested on Microk8s, please see [microk8s/README.md](microk8s/README.md) for more information.
+- locked in to cassandra:3.11.11 when running in K8s
+
 ## Update: June, 10, 2020
 
 In honor of Lightbend’s release of Akka’s Split Brain Resolver as OSS, I’ve updated this repository to take advantage of Akka 2.6.6.

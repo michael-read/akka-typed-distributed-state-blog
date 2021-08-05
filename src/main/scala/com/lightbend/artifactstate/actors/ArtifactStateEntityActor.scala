@@ -91,7 +91,7 @@ object ArtifactStateEntityActor {
 
   private val eventHandler: (CurrState, ArtifactEvent) => CurrState = { (state, event) =>
     event match {
-      case ArtifactRead(mark) =>
+      case ArtifactRead(_) =>
         CurrState(artifactRead = true, artifactInUserFeed = state.artifactInUserFeed)
 
       case ArtifactAddedToUserFeed() =>

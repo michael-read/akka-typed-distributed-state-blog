@@ -75,7 +75,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
         CommandResponse(false)
     }.recover {
       case ex: Exception =>
-        system.log.error(ex.getMessage, ex)
+        system.log.error(s"failure on request user: ${req.userId} artifact id: ${req.artifactId} ${ex.getMessage}", ex)
         CommandResponse(false)
     }
   }
@@ -118,7 +118,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
         pathPrefix("isArtifactReadByUser") {
             concat(
               get {
-                parameters(("artifactId".as[Long], "userId")) { (artifactId, userId) =>
+                parameters("artifactId".as[Long], "userId") { (artifactId, userId) =>
                   complete {
                     queryArtifactRead(ArtifactAndUser(artifactId, userId))
                   }
@@ -133,7 +133,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
         pathPrefix("isArtifactInUserFeed") {
           concat(
             get {
-              parameters((("artifactId").as[Long], "userId")) { (artifactId, userId) =>
+              parameters("artifactId".as[Long], "userId") { (artifactId, userId) =>
                 val req = ArtifactAndUser(artifactId, userId)
                 complete(queryArtifactInUserFeed(req))
               }
@@ -147,7 +147,7 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
         pathPrefix("getAllStates") {
           concat(
             get {
-              parameters(("artifactId".as[Long], "userId")) { (artifactId, userId) =>
+              parameters("artifactId".as[Long], "userId") { (artifactId, userId) =>
                 val req = ArtifactAndUser(artifactId, userId)
                 complete(queryAllStates(req))
               }

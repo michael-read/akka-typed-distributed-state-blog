@@ -26,7 +26,7 @@ spec:
         - -c
         - sleep 1 && echo ' -- Pausing to let system catch up ... -->' && /docker-entrypoint.sh
           cassandra -f
-        image: cassandra:latest
+        image: cassandra:3.11.11
         name: cassandra-db
         ports:
         - containerPort: 7000

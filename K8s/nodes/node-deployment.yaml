@@ -18,7 +18,7 @@ spec:
       serviceAccountName: nodes-sa
       containers:
       - name: node
-        image: akka-typed-blog-distributed-state/cluster:0.1.0
+        image: akka-typed-blog-distributed-state/cluster:0.1.1
         #health
         readinessProbe:
           httpGet:
@@ -40,7 +40,7 @@ spec:
                 apiVersion: v1
                 fieldPath: status.podIP
         - name: CASSANDRA_CONTACT_POINT1
-          value: "cassandra-db"
+          value: "cassandra-db:9042"
         - name: JAVA_OPTS
           value: "-Dconfig.resource=cluster-application-k8s.conf"
         ports:

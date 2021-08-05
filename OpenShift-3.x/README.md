@@ -14,3 +14,7 @@ oc apply -f deploy.yaml
 oc apply -f Openshift/node-deployment.yaml
 oc apply -f Openshift/endpoint-deployment.yaml
 ```
+
+
+### Update: 2021-08-04
+- NOTE: not tested w/ Openshift
