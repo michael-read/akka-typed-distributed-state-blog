@@ -1,9 +1,8 @@
 package com.lightbend.artifactstate.app
 
-import akka.{Done, NotUsed, actor}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.scaladsl.adapter.TypedActorSystemOps
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Scheduler, Terminated}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.cluster.typed.Cluster
@@ -11,10 +10,11 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
-import com.lightbend.artifactstate.actors.{ArtifactStateEntityActor, ClusterListenerActor}
+import akka.{Done, NotUsed, actor}
 import com.lightbend.artifactstate.actors.ArtifactStateEntityActor.{ArtifactCommand, ArtifactStatesShardName}
+import com.lightbend.artifactstate.actors.{ArtifactStateEntityActor, ClusterListenerActor}
 import com.lightbend.artifactstate.endpoint.ArtifactStateRoutes
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -66,16 +66,15 @@ object StartNode {
 
             lazy val routes: Route = new ArtifactStateRoutes(context.system, psCommandActor).psRoutes
             val httpPort = context.system.settings.config.getString("akka.http.server.default-http-port")
-            if (cluster.selfMember.hasRole("docker") || cluster.selfMember.hasRole("k8s")) {
-              Http().bindAndHandle(routes, "0.0.0.0").map { binding =>
-                context.log.info(s"Server online inside container on port ${httpPort}")
-              }
+            val interface = if (!cluster.selfMember.hasRole("docker") && !cluster.selfMember.hasRole("k8s")) {
+              "localhost"
             }
             else {
-              Http().bindAndHandle(routes, "localhost").map { binding =>
-                context.log.info(s"Server online at http://localhost:${httpPort}")
-              }
+              "0.0.0.0"
             }
+            val binding = Http().newServerAt(interface, 8082).bind(routes)
+            // report successful binding
+            binding.foreach { binding => println(s"Server online inside container on ip ${binding.localAddress} port $httpPort") }
           }
         }
 
@@ -88,7 +87,7 @@ object StartNode {
       }
   }
 
-  def startNode(behavior: Behavior[NotUsed], clusterName: String) = {
+  def startNode(behavior: Behavior[NotUsed], clusterName: String): Future[Done] = {
     val system = ActorSystem(behavior, clusterName, appConfig)
     system.whenTerminated // remove compiler warnings
   }
