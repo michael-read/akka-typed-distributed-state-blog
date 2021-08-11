@@ -34,6 +34,7 @@ def commercialDependencies : Seq[ModuleID] = {
     // BEGIN: this requires a commercial Lightbend Subscription
     Cinnamon.library.cinnamonAkkaHttp,
     Cinnamon.library.cinnamonAkka,
+    Cinnamon.library.cinnamonAkkaGrpc,
     Cinnamon.library.cinnamonAkkaPersistence,
     Cinnamon.library.cinnamonJvmMetricsProducer,
     Cinnamon.library.cinnamonCHMetrics3,
