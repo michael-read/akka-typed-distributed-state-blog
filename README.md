@@ -9,6 +9,9 @@ In this four part blog series, we walk you through a working Proof of Concept (P
 - [Part 4](https://www.lightbend.com/blog/how-to-distribute-application-state-with-akka-cluster-part-4-the-source-code) - Source Code: In our final installment, we do a deep dive into our Scala source code.
  	
 ----------------
+## Update: August, 6, 2021
+- fixed deprecation warnings
+
 ## Update: August, 5, 2021
 - Upgraded all versions of the Lightbend stack's dependencies to the currently released versions.
   * The biggest change revolves around the change of the `akka-persistence-cassandra` (v0.102 -> v1.0.5), which requires a migration in tables and configuration.

@@ -14,6 +14,7 @@ name := "akka-typed-blog-distributed-state"
 ThisBuild / version := "0.1.2"
 ThisBuild / organization := "com.lightbend"
 ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / scalacOptions += "-deprecation"
 
 // we're relying on the new credential file format for lightbend.sbt as described
 //  here -> https://www.lightbend.com/account/lightbend-platform/credentials, which

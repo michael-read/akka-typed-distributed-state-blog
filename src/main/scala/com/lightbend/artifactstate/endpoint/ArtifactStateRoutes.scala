@@ -39,21 +39,21 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
 
   def queryArtifactRead(req: ArtifactAndUser): Future[ExtResponse] = {
     val result = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
-      ShardingEnvelope(req.artifactId + req.userId, IsArtifactReadByUser(ref, req.artifactId, req.userId))
+      ShardingEnvelope("%d%s".format(req.artifactId, req.userId), IsArtifactReadByUser(ref, req.artifactId, req.userId))
     }
     handleResponse(req, result)
   }
 
   def queryArtifactInUserFeed(req: ArtifactAndUser): Future[ExtResponse] = {
     val result = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
-      ShardingEnvelope(req.artifactId + req.userId, IsArtifactInUserFeed(ref, req.artifactId, req.userId))
+      ShardingEnvelope("%d%s".format(req.artifactId, req.userId), IsArtifactInUserFeed(ref, req.artifactId, req.userId))
     }
     handleResponse(req, result)
   }
 
   def queryAllStates(req: ArtifactAndUser): Future[AllStatesResponse] = {
     val f = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
-      ShardingEnvelope(req.artifactId + req.userId, GetAllStates(ref, req.artifactId, req.userId))
+      ShardingEnvelope("%d%s".format(req.artifactId, req.userId), GetAllStates(ref, req.artifactId, req.userId))
     }
     f.map {
       case AllStates(artifactRead, artifactInUserFeed) =>
@@ -82,21 +82,21 @@ class ArtifactStateRoutes(system: ActorSystem[Nothing], psCommandActor: ActorRef
 
   def cmdArtifactRead(req: ArtifactAndUser): Future[CommandResponse] = {
     val result = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
-      ShardingEnvelope(req.artifactId + req.userId, SetArtifactRead(ref, req.artifactId, req.userId))
+      ShardingEnvelope("%d%s".format(req.artifactId, req.userId), SetArtifactRead(ref, req.artifactId, req.userId))
     }
     handleCmdResponse(req, result)
   }
 
   def cmdArtifactAddedToUserFeed(req: ArtifactAndUser): Future[CommandResponse] = {
     val result = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
-      ShardingEnvelope(req.artifactId + req.userId, SetArtifactAddedToUserFeed(ref, req.artifactId, req.userId))
+      ShardingEnvelope("%d%s".format(req.artifactId, req.userId), SetArtifactAddedToUserFeed(ref, req.artifactId, req.userId))
     }
     handleCmdResponse(req, result)
   }
 
   def cmdArtifactRemovedFromUserFeed(req: ArtifactAndUser): Future[CommandResponse] = {
     val result = psCommandActor.ask { ref : ActorRef[ArtifactResponse] =>
-      ShardingEnvelope(req.artifactId + req.userId, SetArtifactRemovedFromUserFeed(ref, req.artifactId, req.userId))
+      ShardingEnvelope("%d%s".format(req.artifactId, req.userId), SetArtifactRemovedFromUserFeed(ref, req.artifactId, req.userId))
     }
     handleCmdResponse(req, result)
   }
