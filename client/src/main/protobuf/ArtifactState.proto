@@ -17,7 +17,7 @@ service ArtifactStateService {
   rpc SetArtifactAddedToUserFeed (ArtifactAndUser) returns (CommandResponse) {}
   rpc SetArtifactRemovedFromUserFeed (ArtifactAndUser) returns (CommandResponse) {}
 
-  rpc CommandsStreamed (stream ArtifactCommand) returns (stream CommandResponse) {}
+  rpc CommandsStreamed (stream ArtifactCommand) returns (stream StreamedResponse) {}
 }
 
 message ArtifactAndUser {
@@ -40,14 +40,18 @@ message AllStatesResponse {
   string failureMsg         = 5;
 }
 
+message CommandResponse {
+  bool  success     = 1;
+}
+
 message ArtifactCommand {
   uint64 artifactId       = 1;
   string userId           = 2;
   string command          = 3;  // SetArtifactReadByUser, SetArtifactAddedToUserFeed, SetArtifactRemovedFromUserFeed
 }
 
-message CommandResponse {
-  bool  success     = 1;
-  string failureMsg = 2;
+message StreamedResponse {
+  bool  success           = 1;
+  string failureMsg       = 2;
+  ArtifactCommand command = 3;
 }
-
