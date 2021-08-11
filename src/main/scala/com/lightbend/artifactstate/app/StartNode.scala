@@ -1,20 +1,22 @@
 package com.lightbend.artifactstate.app
 
-import akka.{Done, NotUsed, actor}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.scaladsl.adapter.TypedActorSystemOps
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Scheduler, Terminated}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.cluster.typed.Cluster
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.http.scaladsl.server.Directives.{concat, handle}
 import akka.http.scaladsl.server.Route
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
-import com.lightbend.artifactstate.actors.{ArtifactStateEntityActor, ClusterListenerActor}
+import akka.{Done, NotUsed, actor}
 import com.lightbend.artifactstate.actors.ArtifactStateEntityActor.{ArtifactCommand, ArtifactStatesShardName}
-import com.lightbend.artifactstate.endpoint.ArtifactStateRoutes
-import com.typesafe.config.{Config, ConfigFactory}
+import com.lightbend.artifactstate.actors.{ArtifactStateEntityActor, ClusterListenerActor}
+import com.lightbend.artifactstate.endpoint.{ArtifactStateRoutes, ArtifactStateServiceHandler, GrpcArtifactStateServiceImpl}
+import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -22,9 +24,9 @@ object StartNode {
   private val appConfig = ConfigFactory.load()
 
   def main(args: Array[String]): Unit = {
-    val clusterName = appConfig.getString ("clustering.cluster.name")
-    val clusterPort = appConfig.getInt ("clustering.port")
-    val defaultPort = appConfig.getInt ("clustering.defaultPort")
+    val clusterName = appConfig.getString("clustering.cluster.name")
+    val clusterPort = appConfig.getInt("clustering.port")
+    val defaultPort = appConfig.getInt("clustering.defaultPort")
     if (appConfig.hasPath("clustering.ports")) {
       val clusterPorts = appConfig.getIntList("clustering.ports")
       clusterPorts.forEach { port =>
@@ -37,9 +39,9 @@ object StartNode {
   }
 
   private object RootBehavior {
-    def apply(port: Int, defaultPort: Int) : Behavior[NotUsed] =
+    def apply(port: Int, defaultPort: Int): Behavior[NotUsed] =
       Behaviors.setup { context =>
-        implicit val classicSystem: actor.ActorSystem =  TypedActorSystemOps(context.system).toClassic
+        implicit val classicSystem: actor.ActorSystem = TypedActorSystemOps(context.system).toClassic
 
         val TypeKey = EntityTypeKey[ArtifactCommand](ArtifactStatesShardName)
 
@@ -66,16 +68,26 @@ object StartNode {
 
             lazy val routes: Route = new ArtifactStateRoutes(context.system, psCommandActor).psRoutes
             val httpPort = context.system.settings.config.getString("akka.http.server.default-http-port")
-            if (cluster.selfMember.hasRole("docker") || cluster.selfMember.hasRole("k8s")) {
-              Http().bindAndHandle(routes, "0.0.0.0").map { binding =>
-                context.log.info(s"Server online inside container on port ${httpPort}")
-              }
+            val interface = if (cluster.selfMember.hasRole("docker") || cluster.selfMember.hasRole("k8s")) {
+              "0.0.0.0"
             }
             else {
-              Http().bindAndHandle(routes, "localhost").map { binding =>
-                context.log.info(s"Server online at http://localhost:${httpPort}")
-              }
+              "localhost"
             }
+
+            // Create gRPC service handler
+            val grpcService: HttpRequest => Future[HttpResponse] =
+              ArtifactStateServiceHandler.withServerReflection(new GrpcArtifactStateServiceImpl(context.system, psCommandActor))
+
+            // As a Route
+            val grpcHandlerRoute: Route = handle(grpcService)
+
+            val route = concat(routes, grpcHandlerRoute)
+
+            // Both HTTP and gRPC Binding
+            val binding = Http().newServerAt(interface, httpPort.toInt).bind(route)
+
+            binding.foreach { binding => println(s"HTTP / gRPC Server online at ip ${binding.localAddress} port $httpPort") }
           }
         }
 
@@ -86,10 +98,12 @@ object StartNode {
 
         Behaviors.empty
       }
-  }
+    }
 
-  def startNode(behavior: Behavior[NotUsed], clusterName: String) = {
+
+  def startNode(behavior: Behavior[NotUsed], clusterName: String): Future[Done] = {
     val system = ActorSystem(behavior, clusterName, appConfig)
     system.whenTerminated // remove compiler warnings
   }
+
 }

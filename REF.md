@@ -130,3 +130,12 @@ For deployment to an AWS / ECS production environment we recommend [Akka Bootstr
 For an example of the configuration required for the PoC in code on AWS / ECS using Akka Bootstrap please see this [Github repository](https://github.com/akka/akka-management/tree/master/bootstrap-joining-demo/aws-api-ecs). 
 
 Warning: If you’re extending **application.conf**, please make sure your new configuration file sets **akka.cluster.seed-nodes** to **null** as this setting conflicts with Akka Bootstrap. If your configuration is completely in code, then akka.cluster.seed-nodes should not be set at all.
+
+## gRPC Curl Commands
+- grpcurl -plaintext localhost:8082 list
+- grpcurl -plaintext -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/SetArtifactReadByUser
+- grpcurl -plaintext -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/SetArtifactAddedToUserFeed
+- grpcurl -plaintext -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/SetArtifactRemovedFromUserFeed
+- grpcurl -plaintext -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/IsArtifactReadByUser
+- grpcurl -plaintext -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/IsArtifactInUserFeed
+- grpcurl -plaintext -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/GetAllStates

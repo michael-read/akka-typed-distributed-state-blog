@@ -2,7 +2,7 @@ import com.lightbend.cinnamon.sbt.Cinnamon.CinnamonKeys.cinnamon
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 
-lazy val akkaHttpVersion = "10.2.5"
+lazy val akkaHttpVersion = "10.2.6"
 lazy val akkaVersion     = "2.6.15"
 lazy val logbackVersion  = "1.2.3"
 lazy val akkaManagementVersion = "1.1.1"
@@ -15,7 +15,7 @@ ThisBuild / version := "0.1.2"
 ThisBuild / organization := "com.lightbend"
 ThisBuild / scalaVersion := "2.13.6"
 
-// we're relying on the new credential file format for hold_lightbend.sbt as described
+// we're relying on the new credential file format for lightbend.sbt as described
 //  here -> https://www.lightbend.com/account/lightbend-platform/credentials, which
 //  requires a commercial Lightbend Subscription.
 val credentialFile = file("./lightbend.sbt")
@@ -51,6 +51,7 @@ def ossDependencies : Seq[ModuleID] = {
     "com.typesafe.akka" %% "akka-remote" % akkaVersion,
     "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
+    "com.typesafe.akka" %% "akka-http2-support" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-xml" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
@@ -62,6 +63,7 @@ def ossDependencies : Seq[ModuleID] = {
     "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
     "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
     "com.typesafe.akka" %% "akka-discovery" % akkaVersion,
+    "com.typesafe.akka" %% "akka-pki" % akkaVersion,
     "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % akkaManagementVersion,
     "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % akkaManagementVersion,
     "com.lightbend.akka.management" %% "akka-management-cluster-http" % akkaManagementVersion,
@@ -88,9 +90,9 @@ lazy val root = (project in file("."))
   .enablePlugins(JavaAppPackaging)
   .enablePlugins(if (doesCredentialExist.booleanValue()) Cinnamon else Plugins.empty) // NOTE: Cinnamon requires a commercial Lightbend Subscription
   .enablePlugins(MultiJvmPlugin).configs(MultiJvm)
+  .enablePlugins(AkkaGrpcPlugin)
   .settings(multiJvmSettings: _*)
   .settings(
-//    dockerBaseImage := "adoptopenjdk/openjdk8",
     Docker / packageName := "akka-typed-blog-distributed-state/cluster",
     libraryDependencies ++= {
       if (doesCredentialExist.booleanValue()) {
@@ -108,11 +110,6 @@ lazy val root = (project in file("."))
     dockerBaseImage := "openjdk:11-slim",
     dockerExposedPorts ++= Seq(9200)
   )
-
-/*
-  cinnamon := { if (doesCredentialExist.booleanValue()) true else false }
-  run / cinnamon  := { if (doesCredentialExist.booleanValue()) true else false }
-*/
 
 run / cinnamon  := true
 

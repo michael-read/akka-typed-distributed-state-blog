@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+option java_package = "com.lightbend.artifactstate.endpoint";
+option java_outer_classname = "ArtifactStateProto";
+
+// The ArtifactStateService service definition.
+service ArtifactStateService {
+  // queries
+  rpc IsArtifactReadByUser (ArtifactAndUser) returns (ExtResponse) {}
+
+  rpc IsArtifactInUserFeed (ArtifactAndUser) returns (ExtResponse) {}
+
+  rpc GetAllStates (ArtifactAndUser) returns (AllStatesResponse) {}
+
+  // commands
+  rpc SetArtifactReadByUser (ArtifactAndUser) returns (CommandResponse) {}
+  rpc SetArtifactAddedToUserFeed (ArtifactAndUser) returns (CommandResponse) {}
+  rpc SetArtifactRemovedFromUserFeed (ArtifactAndUser) returns (CommandResponse) {}
+
+  rpc CommandsStreamed (stream ArtifactCommand) returns (stream StreamedResponse) {}
+}
+
+message ArtifactAndUser {
+  uint64 artifactId       = 1;
+  string userId           = 2;
+}
+
+message ExtResponse {
+  uint64 artifactId       = 1;
+  string userId           = 2;
+  bool  answer            = 3;
+  string failureMsg       = 4;
+}
+
+message AllStatesResponse {
+  uint64 artifactId         = 1;
+  string userId             = 2;
+  bool  artifactRead        = 3;
+  bool  artifactInUserFeed  = 4;
+  string failureMsg         = 5;
+}
+
+message CommandResponse {
+  bool  success     = 1;
+}
+
+message ArtifactCommand {
+  uint64 artifactId       = 1;
+  string userId           = 2;
+  string command          = 3;  // SetArtifactReadByUser, SetArtifactAddedToUserFeed, SetArtifactRemovedFromUserFeed
+}
+
+message StreamedResponse {
+  bool  success           = 1;
+  string failureMsg       = 2;
+  ArtifactCommand command = 3;
+}
