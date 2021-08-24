@@ -1,5 +1,6 @@
 package com.lightbend.artifactstate.tests
 
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.actor.testkit.typed.scaladsl.TestProbe
 import akka.actor.typed.ActorRef
@@ -138,6 +139,16 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
       GrpcRequestHelpers(s"/ArtifactStateService/$command", List.empty, Source.single(artifactGrpcMember))(serializer, writer, typedSystem.classicSystem)
     }
 
+    def grpcRequestHelper(commandsSource: Source[endpoint.ArtifactCommand, NotUsed]) : HttpRequest = {
+      val serializer: ScalapbProtobufSerializer[endpoint.ArtifactCommand] =
+        com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.ArtifactCommandSerializer
+      val writer: GrpcProtocol.GrpcProtocolWriter = GrpcProtocolNative.newWriter(Identity)
+      GrpcRequestHelpers(
+        Uri("/ArtifactStateService/CommandsStreamed"),
+        List.empty,
+        commandsSource)(serializer, writer, typedSystem.classicSystem)
+    }
+
     def getCommandResponse(response: HttpResponse) : CommandResponse = {
       val source = responseToSource(Future(response), com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.CommandResponseSerializer)
       val element = source.runWith(Sink.head)
@@ -154,6 +165,13 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
       val source = responseToSource(Future(response), com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.AllStatesResponseSerializer)
       val element = source.runWith(Sink.head)
       Await.result(element, 1.second)
+    }
+
+    def getStreamedResponse(response: HttpResponse) : Array[StreamedResponse] = {
+      val responseSource = responseToSource(Future(response), com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.StreamedResponseSerializer)
+      val responseStreamed: Future[Seq[StreamedResponse]] =
+        responseSource.limit(3).runWith(Sink.seq)
+      Await.result(responseStreamed, 1.second).toArray
     }
 
     // Create gRPC service handler
@@ -711,10 +729,81 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
 
             contentType should ===(ContentTypes.`application/grpc+proto`)
 
-            // and no entries should be in the list:
+            // and no entries should be in the feed:
             val allResponse = getAllResponse(response)
             allResponse.artifactId should ===(artifactGrpcMember.artifactId)
             allResponse.userId should ===(artifactGrpcMember.userId)
+            allResponse.artifactInUserFeed should ===(false)
+            allResponse.artifactRead should ===(true)
+          }
+
+        }
+      }
+
+      // this will run on all nodes
+      // use barrier to coordinate test steps
+      enterBarrier("after validate getAllStates (artifactRead: true, artifactInFeed: false (GET)" )
+    }
+
+    "validate CommandsStreamed (gRPC)" in within(15.seconds) {
+      runOn(endpointTest) {
+        val region = startProxySharding()
+
+        val elements = List(
+          endpoint.ArtifactCommand(3L, "Mike", "SetArtifactReadByUser"),
+          endpoint.ArtifactCommand(3L, "Mike", "SetArtifactAddedToUserFeed"),
+          endpoint.ArtifactCommand(3L, "Mike", "SetArtifactRemovedFromUserFeed")
+        )
+
+        val source = Source.fromIterator(() => elements.iterator)
+
+        new GrpcRouteTesting(region) {
+
+          val request2: HttpRequest = grpcRequestHelper(source)
+
+          request2 ~> grpcHandlerRoute ~> check {
+            status should ===(StatusCodes.OK)
+
+            contentType should ===(ContentTypes.`application/grpc+proto`)
+
+            val responses = getStreamedResponse(response)
+
+            responses.foreach( response => println(s"validate CommandsStreamed (gRPC) response: $response"))
+
+            responses.length should===(3)
+            responses(0).success === true
+            responses(1).success === true
+            responses(2).success === true
+          }
+
+        }
+      }
+
+      // this will run on all nodes
+      // use barrier to coordinate test steps
+      enterBarrier("after validate getAllStates (artifactRead: true, artifactInFeed: false (GET)" )
+    }
+
+    "validate streamed getAllStates (artifactRead: true, artifactInFeed: false (gRPC)" in within(15.seconds) {
+      runOn(endpointTest) {
+        val region = startProxySharding()
+
+        new GrpcRouteTesting(region) {
+
+          // test retrieve of new state
+          val request2: HttpRequest = grpcRequestHelper("GetAllStates", endpoint.ArtifactAndUser(3L, "Mike"))
+
+          request2 ~> grpcHandlerRoute ~> check {
+            status should ===(StatusCodes.OK)
+
+            contentType should ===(ContentTypes.`application/grpc+proto`)
+
+            val allResponse = getAllResponse(response)
+
+            println(s"validate streamed getAllStates $allResponse")
+
+            allResponse.artifactId should ===(3L)
+            allResponse.userId should ===("Mike")
             allResponse.artifactInUserFeed should ===(false)
             allResponse.artifactRead should ===(true)
           }
