@@ -17,6 +17,7 @@ To run Akka Data Pipelines and the example on microk8s, install the following ad
 * helm3 - Kubernetes package manager 
 * Storage class - allocates storage from host directory
 * traefik - Ingress controller for external access
+* registry - a private image registry and expose it on localhost:32000.
 
 Before installing add-ons, to avoid potential permission problems, be sure that the current user is part of the `microk8s` group.
 Enable the Microk8s add-ons with the following commands in your terminal window:
@@ -51,15 +52,43 @@ curl localhost:8080/cluster/members | python -m json.tool
 For more information other options, [please see the API Definition](https://doc.akka.io/docs/akka-management/current/cluster-http-management.html#api-definition).
 
 ## Deployment
-1. use the Cassandra yamls in ./K8s/cassandra
-2. then deploy `nodes` then `endpoint`
-3. before putting any load on the sytem issue the following command to make sure the Cassandra tables have been created.
+1. deploy Cassandra using the yamls in ./K8s/cassandra
+```
+k apply -f ../k8s/cassandra
+```
+2. build to local docker:
+```
+sbt docker:publishLocal
+```
+3. tag the image. For example,
+```
+docker tag <image id> localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.3
+```
+4. then push to the microk8s registry
+```
+docker push localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.3
+```
+5. then deploy `nodes`
+```
+k apply -f nodes
+```
+6. then deploy `endpoints`
+```
+k apply -f endpoints
+```
+7. before putting any load on the sytem issue the following command to make sure the Cassandra tables have been created.
 ```
 curl -d '{"artifactId":1, "userId":"Michael"}' -H "Content-Type: application/json" -X POST localhost:8080/artifactState/setArtifactReadByUser
 
 curl 'localhost:8080/artifactState/getAllStates?artifactId=1&userId=Michael'
 ```
-4. You can then follow the logs for all the nodes with one command:
+You can also test the gRPC endpoints:
+```
+grpcurl -plaintext localhost:8080 list
+
+grpcurl -plaintext  -d '{"artifactId":1, "userId":"Michael"}' localhost:8080 ArtifactStateService/GetAllStates
+```
+8. You can also follow the logs for all the nodes with one command:
 ```
 k logs -f -l app=ArtifactStateCluster
 ```
