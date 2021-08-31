@@ -9,6 +9,9 @@ In this four part blog series, we walk you through a working Proof of Concept (P
 - [Part 4](https://www.lightbend.com/blog/how-to-distribute-application-state-with-akka-cluster-part-4-the-source-code) - Source Code: In our final installment, we do a deep dive into our Scala source code.
  	
 ----------------
+## Update: August, 31, 2021
+- On Branch: mread-add-grpc-endpoint: updated the instructions for deploying locally on Microk8s.
+
 ## Update: August, 11, 2021
 - On Branch: mread-add-grpc-endpoint, which will be merged to master, once we update the blog post
 - fix Cassandra v3.11.11 docker-compose files
