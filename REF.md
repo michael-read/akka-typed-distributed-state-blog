@@ -45,6 +45,33 @@ curl -d '{"artifactId":1, "userId":"Michael"}' -H "Content-Type: application/jso
 curl -d '{"artifactId":1, "userId":"Michael"}' -H "Content-Type: application/json" -X POST http://localhost:8082/artifactState/getAllStates
 curl 'http://localhost:8082/artifactState/getAllStates?artifactId=1&userId=Michael'
 ```
+
+## grpcurl
+https://github.com/fullstorydev/grpcurl
+
+### Listing Services
+```
+grpcurl -plaintext localhost:8082 list
+```
+
+### Artifact / User Read
+```
+grpcurl -plaintext -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/SetArtifactReadByUser
+grpcurl -plaintext -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/IsArtifactReadByUser
+```
+
+### Artifact / User Feed
+```
+grpcurl -plaintext  -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/SetArtifactAddedToUserFeed
+grpcurl -plaintext  -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/IsArtifactInUserFeed
+grpcurl -plaintext  -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/SetArtifactRemovedFromUserFeed
+```
+
+### Query All States
+```
+grpcurl -plaintext  -d '{"artifactId":1, "userId":"Michael"}' localhost:8082 ArtifactStateService/GetAllStates
+```
+
 ## To test API:
 Testing relies on multi-jvm, and Cassandra for testing of internal cluster api, as well as HTTP end-to-end integration.
 
