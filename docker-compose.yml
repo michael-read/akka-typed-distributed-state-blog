@@ -21,7 +21,7 @@ services:
       retries: 10
 
   seed:
-    image: akka-typed-blog-distributed-state/cluster:0.1.1
+    image: akka-typed-blog-distributed-state/cluster:0.1.3
     links:
     - cassandra-db
     depends_on:
@@ -40,7 +40,7 @@ services:
     - statepoc
 
   cluster:
-    image: akka-typed-blog-distributed-state/cluster:0.1.1
+    image: akka-typed-blog-distributed-state/cluster:0.1.3
     links:
     - cassandra-db
     depends_on:
@@ -57,7 +57,7 @@ services:
     - statepoc
 
   endpoint:
-    image: akka-typed-blog-distributed-state/cluster:0.1.1
+    image: akka-typed-blog-distributed-state/cluster:0.1.3
     environment:
       JAVA_OPTS: "-Dconfig.resource=endpoint-application-docker.conf"
       CLUSTER_IP: endpoint
