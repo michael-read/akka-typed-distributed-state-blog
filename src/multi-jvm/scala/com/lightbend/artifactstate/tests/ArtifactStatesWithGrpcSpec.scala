@@ -8,16 +8,17 @@ import akka.actor.typed.scaladsl.adapter._
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.cluster.typed.{Join, MultiNodeTypedClusterSpec}
-import akka.grpc.GrpcProtocol
-import akka.grpc.internal.AkkaHttpClientUtils.responseToSource
+import akka.grpc.{GrpcProtocol, GrpcResponseMetadata, ProtobufSerializer}
 import akka.grpc.internal.{GrpcProtocolNative, GrpcRequestHelpers, Identity}
 import akka.grpc.scaladsl.ScalapbProtobufSerializer
 import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.RouteTestTimeout
 import akka.persistence.Persistence
 import akka.remote.testconductor.RoleName
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import akka.testkit.ImplicitSender
 import com.lightbend.artifactstate.actors.ArtifactStateEntityActor
@@ -29,7 +30,7 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
 object ArtifactStatesWithGrpcSpec extends MultiNodeConfig {
@@ -149,26 +150,39 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
         commandsSource)(serializer, writer, typedSystem.classicSystem)
     }
 
-    def getCommandResponse(response: HttpResponse) : CommandResponse = {
-      val source = responseToSource(Future(response), com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.CommandResponseSerializer)
+    def responseToSource[O](response: HttpResponse, deserializer: ProtobufSerializer[O]): Source[O, Future[GrpcResponseMetadata]] = {
+      akka.grpc.internal.AkkaHttpClientUtils.responseToSource(
+        Future(
+          response.withHeaders(
+            response.headers ++ response
+              .attribute(AttributeKeys.trailer)
+              .map(_.headers.map { case (name, value) => RawHeader(name, value): HttpHeader } )
+              .getOrElse(Seq.empty)
+          )),
+        deserializer
+      )
+    }
+
+      def getCommandResponse(response: HttpResponse) : CommandResponse = {
+      val source = responseToSource(response, com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.CommandResponseSerializer)
       val element = source.runWith(Sink.head)
       Await.result(element, 1.second)
     }
 
     def getExtResponse(response: HttpResponse) : ExtResponse = {
-      val source = responseToSource(Future(response), com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.ExtResponseSerializer)
+      val source = responseToSource(response, com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.ExtResponseSerializer)
       val element = source.runWith(Sink.head)
       Await.result(element, 1.second)
     }
 
     def getAllResponse(response: HttpResponse) : AllStatesResponse = {
-      val source = responseToSource(Future(response), com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.AllStatesResponseSerializer)
+      val source = responseToSource(response, com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.AllStatesResponseSerializer)
       val element = source.runWith(Sink.head)
       Await.result(element, 1.second)
     }
 
     def getStreamedResponse(response: HttpResponse) : Array[StreamedResponse] = {
-      val responseSource = responseToSource(Future(response), com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.StreamedResponseSerializer)
+      val responseSource = responseToSource(response, com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.StreamedResponseSerializer)
       val responseStreamed: Future[Seq[StreamedResponse]] =
         responseSource.limit(3).runWith(Sink.seq)
       Await.result(responseStreamed, 1.second).toArray
