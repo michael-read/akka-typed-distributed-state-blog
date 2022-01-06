@@ -1,17 +1,15 @@
 package com.lightbend.artifactstate.tests
 
-import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.actor.testkit.typed.scaladsl.TestProbe
 import akka.actor.typed.ActorRef
 import akka.actor.typed.scaladsl.adapter._
+import akka.stream.Materializer
 import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, Entity, EntityTypeKey}
 import akka.cluster.sharding.typed.{ClusterShardingSettings, ShardingEnvelope}
 import akka.cluster.typed.{Join, MultiNodeTypedClusterSpec}
-import akka.grpc.GrpcProtocol
-import akka.grpc.internal.AkkaHttpClientUtils.responseToSource
-import akka.grpc.internal.{GrpcProtocolNative, GrpcRequestHelpers, Identity}
-import akka.grpc.scaladsl.ScalapbProtobufSerializer
+import akka.grpc.GrpcClientSettings
+import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.RouteTestTimeout
@@ -29,7 +27,6 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
 object ArtifactStatesWithGrpcSpec extends MultiNodeConfig {
@@ -79,14 +76,7 @@ object ArtifactStatesWithGrpcSpec extends MultiNodeConfig {
       # If ask takes more time than this to complete the request is failed
       routes.ask-timeout = 5s
     }
-    akka.grpc.client {
-      "client.ArtifactStateService" {
-        host = localhost
-        port = 8082
-        use-tls = false
-      }
-    }
-    akka.http.server.default-http-port = 8082
+    akka.http.server.preview.enable-http2 = on
     """))
 }
 
@@ -121,65 +111,18 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
     lazy val routes: Route = psRoutes
   }
 
-  abstract class GrpcRouteTesting(psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]]) extends ArtifactStateRoutes(typedSystem, psCommandActor) with RouteTest with TestFrameworkInterface
-    with ScalaFutures with ScalatestUtils {
+  abstract class GrpcServiceTesting(psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]]) extends ArtifactStateRoutes(typedSystem, psCommandActor)
+    with ScalaFutures {
+    override implicit def patienceConfig: PatienceConfig = PatienceConfig(5.seconds, 50.millis)
 
-    override protected def createActorSystem(): akka.actor.ActorSystem = typedSystem.toClassic
-    override def failTest(msg: String): Nothing = throw new TestFailedException(msg, 11)
-    def testExceptionHandler: ExceptionHandler = ExceptionHandler {
-      case e =>
-        e.printStackTrace()
-        complete((StatusCodes.InternalServerError, e.getLocalizedMessage))
-    }
-
-    def grpcRequestHelper(command: String, artifactGrpcMember: com.lightbend.artifactstate.endpoint.ArtifactAndUser) : HttpRequest = {
-      val serializer: ScalapbProtobufSerializer[endpoint.ArtifactAndUser] =
-        com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.ArtifactAndUserSerializer
-      val writer: GrpcProtocol.GrpcProtocolWriter = GrpcProtocolNative.newWriter(Identity)
-      GrpcRequestHelpers(s"/ArtifactStateService/$command", List.empty, Source.single(artifactGrpcMember))(serializer, writer, typedSystem.classicSystem)
-    }
-
-    def grpcRequestHelper(commandsSource: Source[endpoint.ArtifactCommand, NotUsed]) : HttpRequest = {
-      val serializer: ScalapbProtobufSerializer[endpoint.ArtifactCommand] =
-        com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.ArtifactCommandSerializer
-      val writer: GrpcProtocol.GrpcProtocolWriter = GrpcProtocolNative.newWriter(Identity)
-      GrpcRequestHelpers(
-        Uri("/ArtifactStateService/CommandsStreamed"),
-        List.empty,
-        commandsSource)(serializer, writer, typedSystem.classicSystem)
-    }
-
-    def getCommandResponse(response: HttpResponse) : CommandResponse = {
-      val source = responseToSource(Future(response), com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.CommandResponseSerializer)
-      val element = source.runWith(Sink.head)
-      Await.result(element, 1.second)
-    }
-
-    def getExtResponse(response: HttpResponse) : ExtResponse = {
-      val source = responseToSource(Future(response), com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.ExtResponseSerializer)
-      val element = source.runWith(Sink.head)
-      Await.result(element, 1.second)
-    }
-
-    def getAllResponse(response: HttpResponse) : AllStatesResponse = {
-      val source = responseToSource(Future(response), com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.AllStatesResponseSerializer)
-      val element = source.runWith(Sink.head)
-      Await.result(element, 1.second)
-    }
-
-    def getStreamedResponse(response: HttpResponse) : Array[StreamedResponse] = {
-      val responseSource = responseToSource(Future(response), com.lightbend.artifactstate.endpoint.ArtifactStateService.Serializers.StreamedResponseSerializer)
-      val responseStreamed: Future[Seq[StreamedResponse]] =
-        responseSource.limit(3).runWith(Sink.seq)
-      Await.result(responseStreamed, 1.second).toArray
-    }
-
-    // Create gRPC service handler
-    val grpcService: HttpRequest => Future[HttpResponse] =
-      ArtifactStateServiceHandler(new GrpcArtifactStateServiceImpl(typedSystem, psCommandActor))(typedSystem.toClassic)
-
-    // As a Route
-    val grpcHandlerRoute: Route = handle(grpcService)
+    private val serverAddress = Http(system)
+      .newServerAt("localhost", 0)
+      .bind(ArtifactStateServiceHandler(new GrpcArtifactStateServiceImpl(typedSystem, psCommandActor))(system))
+      .map(_.localAddress)(system.dispatcher)
+      .futureValue
+    private val settings =
+      GrpcClientSettings.connectToServiceAt(serverAddress.getHostName, serverAddress.getPort)(system).withTls(false)
+    val client = ArtifactStateServiceClient(settings)(system)
   }
 
   def join(from: RoleName, to: RoleName): Unit = {
@@ -318,17 +261,9 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
 
         val region = startProxySharding()
 
-        new GrpcRouteTesting(region) {
-          PatienceConfig()
-
-          val request1: HttpRequest = grpcRequestHelper("SetArtifactReadByUser", artifactGrpcMember)
-          request1 ~> grpcHandlerRoute ~> check {
-            status should ===(StatusCodes.OK)
-
-            contentType should ===(ContentTypes.`application/grpc+proto`)
-
-            getCommandResponse(response).success should ===(true)
-          }
+        new GrpcServiceTesting(region) {
+          val response = client.setArtifactReadByUser(artifactGrpcMember).futureValue
+          response.success should ===(true)
         }
 
       }
@@ -368,23 +303,12 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new GrpcRouteTesting(region) {
-
+        new GrpcServiceTesting(region) {
           // test retrieve of new state
-          val request2: HttpRequest = grpcRequestHelper("IsArtifactReadByUser", artifactGrpcMember)
-
-          request2 ~> grpcHandlerRoute ~> check {
-            status should ===(StatusCodes.OK)
-
-            contentType should ===(ContentTypes.`application/grpc+proto`)
-
-            // and no entries should be in the list:
-            val extResponse = getExtResponse(response)
-            extResponse.answer should ===(true)
-            extResponse.artifactId should ===(artifactGrpcMember.artifactId)
-            extResponse.userId should ===(artifactGrpcMember.userId)
-          }
-
+          val extResponse = client.isArtifactReadByUser(artifactGrpcMember).futureValue
+          extResponse.answer should ===(true)
+          extResponse.artifactId should ===(artifactGrpcMember.artifactId)
+          extResponse.userId should ===(artifactGrpcMember.userId)
         }
       }
 
@@ -462,21 +386,9 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new GrpcRouteTesting(region) {
-
-          // using the RequestBuilding DSL:
-          val request1: HttpRequest = grpcRequestHelper("SetArtifactAddedToUserFeed", artifactGrpcMember)
-
-          request1 ~> grpcHandlerRoute ~> check {
-            status should ===(StatusCodes.OK)
-
-            contentType should ===(ContentTypes.`application/grpc+proto`)
-
-            // and we know what message we're expecting back:
-            getCommandResponse(response).success should ===(true)
-
-          }
-
+        new GrpcServiceTesting(region) {
+          val response = client.setArtifactAddedToUserFeed(artifactGrpcMember).futureValue
+          response.success should ===(true)
         }
       }
 
@@ -516,24 +428,12 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new GrpcRouteTesting(region) {
-
+        new GrpcServiceTesting(region) {
           // test retrieve of new state
-          val request2: HttpRequest = grpcRequestHelper("IsArtifactInUserFeed", artifactGrpcMember)
-
-          request2 ~> grpcHandlerRoute ~> check {
-            status should ===(StatusCodes.OK)
-
-            contentType should ===(ContentTypes.`application/grpc+proto`)
-
-            // and no entries should be in the list:
-            val extResponse = getExtResponse(response)
-            extResponse.answer should ===(true)
-            extResponse.artifactId should ===(artifactGrpcMember.artifactId)
-            extResponse.userId should ===(artifactGrpcMember.userId)
-
-          }
-
+          val extResponse = client.isArtifactInUserFeed(artifactGrpcMember).futureValue
+          extResponse.answer should ===(true)
+          extResponse.artifactId should ===(artifactGrpcMember.artifactId)
+          extResponse.userId should ===(artifactGrpcMember.userId)
         }
       }
 
@@ -606,19 +506,9 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new GrpcRouteTesting(region) {
-
-          // using the RequestBuilding DSL:
-          val request1: HttpRequest = grpcRequestHelper("SetArtifactRemovedFromUserFeed", artifactGrpcMember)
-
-          request1 ~> grpcHandlerRoute ~> check {
-            status should ===(StatusCodes.OK)
-
-            contentType should ===(ContentTypes.`application/grpc+proto`)
-
-            getCommandResponse(response).success should ===(true)
-          }
-
+        new GrpcServiceTesting(region) {
+          val response = client.setArtifactRemovedFromUserFeed(artifactGrpcMember).futureValue
+          response.success should ===(true)
         }
       }
 
@@ -659,23 +549,12 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new GrpcRouteTesting(region) {
-
+        new GrpcServiceTesting(region) {
           // test retrieve of new state
-          val request2: HttpRequest = grpcRequestHelper("IsArtifactInUserFeed", artifactGrpcMember)
-
-          request2 ~> grpcHandlerRoute ~> check {
-            status should ===(StatusCodes.OK)
-
-            contentType should ===(ContentTypes.`application/grpc+proto`)
-
-            // and no entries should be in the list:
-            val extResponse = getExtResponse(response)
-            extResponse.answer should ===(false)
-            extResponse.artifactId should ===(artifactGrpcMember.artifactId)
-            extResponse.userId should ===(artifactGrpcMember.userId)
-          }
-
+          val extResponse = client.isArtifactInUserFeed(artifactGrpcMember).futureValue
+          extResponse.answer should ===(false)
+          extResponse.artifactId should ===(artifactGrpcMember.artifactId)
+          extResponse.userId should ===(artifactGrpcMember.userId)
         }
       }
 
@@ -719,24 +598,13 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new GrpcRouteTesting(region) {
-
+        new GrpcServiceTesting(region) {
           // test retrieve of new state
-          val request2: HttpRequest = grpcRequestHelper("GetAllStates", artifactGrpcMember)
-
-          request2 ~> grpcHandlerRoute ~> check {
-            status should ===(StatusCodes.OK)
-
-            contentType should ===(ContentTypes.`application/grpc+proto`)
-
-            // and no entries should be in the feed:
-            val allResponse = getAllResponse(response)
-            allResponse.artifactId should ===(artifactGrpcMember.artifactId)
-            allResponse.userId should ===(artifactGrpcMember.userId)
-            allResponse.artifactInUserFeed should ===(false)
-            allResponse.artifactRead should ===(true)
-          }
-
+          val allResponse = client.getAllStates(artifactGrpcMember).futureValue
+          allResponse.artifactId should ===(artifactGrpcMember.artifactId)
+          allResponse.userId should ===(artifactGrpcMember.userId)
+          allResponse.artifactInUserFeed should ===(false)
+          allResponse.artifactRead should ===(true)
         }
       }
 
@@ -757,25 +625,15 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
 
         val source = Source.fromIterator(() => elements.iterator)
 
-        new GrpcRouteTesting(region) {
+        new GrpcServiceTesting(region) {
+          implicit val mat = Materializer.matFromSystem(system)
+          val responses = client.commandsStreamed(source).runWith(Sink.seq).futureValue
+          responses.foreach( response => println(s"validate CommandsStreamed (gRPC) response: $response"))
 
-          val request2: HttpRequest = grpcRequestHelper(source)
-
-          request2 ~> grpcHandlerRoute ~> check {
-            status should ===(StatusCodes.OK)
-
-            contentType should ===(ContentTypes.`application/grpc+proto`)
-
-            val responses = getStreamedResponse(response)
-
-            responses.foreach( response => println(s"validate CommandsStreamed (gRPC) response: $response"))
-
-            responses.length should===(3)
-            responses(0).success === true
-            responses(1).success === true
-            responses(2).success === true
-          }
-
+          responses.length should===(3)
+          responses(0).success === true
+          responses(1).success === true
+          responses(2).success === true
         }
       }
 
@@ -788,26 +646,16 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
       runOn(endpointTest) {
         val region = startProxySharding()
 
-        new GrpcRouteTesting(region) {
-
+        new GrpcServiceTesting(region) {
           // test retrieve of new state
-          val request2: HttpRequest = grpcRequestHelper("GetAllStates", endpoint.ArtifactAndUser(3L, "Mike"))
+          val allResponse = client.getAllStates(endpoint.ArtifactAndUser(3L, "Mike")).futureValue
 
-          request2 ~> grpcHandlerRoute ~> check {
-            status should ===(StatusCodes.OK)
+          println(s"validate streamed getAllStates $allResponse")
 
-            contentType should ===(ContentTypes.`application/grpc+proto`)
-
-            val allResponse = getAllResponse(response)
-
-            println(s"validate streamed getAllStates $allResponse")
-
-            allResponse.artifactId should ===(3L)
-            allResponse.userId should ===("Mike")
-            allResponse.artifactInUserFeed should ===(false)
-            allResponse.artifactRead should ===(true)
-          }
-
+          allResponse.artifactId should ===(3L)
+          allResponse.userId should ===("Mike")
+          allResponse.artifactInUserFeed should ===(false)
+          allResponse.artifactRead should ===(true)
         }
       }
 
