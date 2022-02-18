@@ -46,7 +46,11 @@ object StartNode {
         val TypeKey = EntityTypeKey[ArtifactCommand](ArtifactStatesShardName)
 
         val cluster = Cluster(context.system)
-        context.log.info(s"starting node with roles: $cluster.selfMember.roles")
+
+        context.log.info(s"starting node with roles:")
+        cluster.selfMember.roles.foreach { role =>
+          context.log.info(s"role : $role")
+        }
 
         if (cluster.selfMember.hasRole("k8s")) {
           AkkaManagement(classicSystem).start()
@@ -61,10 +65,9 @@ object StartNode {
         else {
           if (cluster.selfMember.hasRole("endpoint")) {
             implicit val ec: ExecutionContextExecutor = context.system.executionContext
-            val psEntities: ActorRef[ShardingEnvelope[ArtifactCommand]] =
+            val psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]] =
               ClusterSharding(context.system).init(Entity(TypeKey)
               (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId)))
-            val psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]] = psEntities
 
             lazy val routes: Route = new ArtifactStateRoutes(context.system, psCommandActor).psRoutes
             val httpPort = context.system.settings.config.getString("akka.http.server.default-http-port")
