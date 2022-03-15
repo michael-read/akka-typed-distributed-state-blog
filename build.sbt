@@ -10,7 +10,7 @@ lazy val akkaCassandraVersion  = "1.0.5"
 lazy val jacksonVersion  = "3.6.6"
 lazy val akkaEnhancementsVersion = "1.1.16"
 
-name := "akka-typed-blog-distributed-state"
+name := "akka-typed-distributed-state-blog"
 ThisBuild / version := "0.1.3"
 ThisBuild / organization := "com.lightbend"
 ThisBuild / scalaVersion := "2.13.6"
@@ -60,7 +60,8 @@ def ossDependencies : Seq[ModuleID] = {
     "com.typesafe.akka" %% "akka-cluster-typed" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-sharding-typed" % akkaVersion,
     "com.typesafe.akka" %% "akka-persistence-typed" % akkaVersion,
-    "com.typesafe.akka" %% "akka-persistence-cassandra" % akkaCassandraVersion,
+//    "com.typesafe.akka" %% "akka-persistence-cassandra" % akkaCassandraVersion,
+    "com.lightbend.akka" %% "akka-persistence-r2dbc" % "0.6.1",
     "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion,
     "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
     "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
