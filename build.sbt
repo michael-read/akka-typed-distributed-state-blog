@@ -2,8 +2,8 @@ import com.lightbend.cinnamon.sbt.Cinnamon.CinnamonKeys.cinnamon
 import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 
-lazy val akkaHttpVersion = "10.2.8"
-lazy val akkaVersion     = "2.6.18"
+lazy val akkaHttpVersion = "10.2.9"
+lazy val akkaVersion     = "2.6.19"
 lazy val logbackVersion  = "1.2.3"
 lazy val akkaManagementVersion = "1.1.3"
 lazy val akkaCassandraVersion  = "1.0.5"
