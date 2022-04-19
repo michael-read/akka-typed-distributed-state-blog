@@ -9,6 +9,10 @@ In this four part blog series, we walk you through a working Proof of Concept (P
 - [Part 4](https://www.lightbend.com/blog/how-to-distribute-application-state-with-akka-cluster-part-4-the-source-code) - Source Code: In our final installment, we do a deep dive into our Scala source code.
  	
 ----------------
+## Update: April, 18, 2022
+- Updated Akka, Akka Http, and Akka gRPC dependencies with the latest versions
+- recreated the missing gRPC Client (ArtifactStateForEach) example for request / response
+
 ## Update: February 22, 2022
 - Merged PR to include gRPC support even though blog hasn't been updated yet. No ETA on blog update.
 - This repo written in Java can be found [here](https://github.com/michael-read/akka-typed-distributed-state-blog-java).
