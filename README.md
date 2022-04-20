@@ -7,7 +7,7 @@ In this four part blog series, we walk you through a working Proof of Concept (P
 - [Part 2](https://www.lightbend.com/blog/how-to-distribute-application-state-with-akka-cluster-part-2-docker-and-local-deploy) - Docker and Local Deploy: here we cover containerizing our PoC, and then deploying locally in Docker. Then, we’ll load test and monitor our PoC as we did in the first installment.
 - [Part 3](https://www.lightbend.com/blog/how-to-distribute-application-state-with-akka-cluster-part-3-kubernetes-monitoring) - Kubernetes and Monitoring: in this part,we introduce Lightbend Console for Kubernetes (K8s), and then deploy our PoC in Minikube (desktop version of K8s) using YAML files provided in this repository. Again, we’ll load test with Gatling, but this time we’ll monitor our PoC in Lightbend Console.
 - [Part 4](https://www.lightbend.com/blog/how-to-distribute-application-state-with-akka-cluster-part-4-the-source-code) - Source Code: In our final installment, we do a deep dive into our Scala source code.
- 	
+> Note: This repoistory is written for **Scala** developers, a **Java** version  can be found [here](https://github.com/michael-read/akka-typed-distributed-state-blog-java). 	
 ----------------
 ## Update: April 18, 2022
 - Updated Akka, Akka Http, and Akka gRPC dependencies with the latest versions
