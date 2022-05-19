@@ -1,24 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: node
+  name: endpoint
 spec:
-  replicas: 3
+  replicas: 1
   selector:
-     matchLabels:
-       app: ArtifactStateCluster
+    matchLabels:
+      app: endpoint
+  strategy: {}
   template:
     metadata:
+      creationTimestamp: null
       labels:
-        app: ArtifactStateCluster
-        tag: clusternode
+        app: endpoint
+        tag: endpoint
       annotations:
         prometheus.io/scrape: 'true'
     spec:
-      serviceAccountName: nodes-sa
+      serviceAccountName: endpoints-sa
       containers:
-      - name: node
-        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.7
+      - env:
+        - name: JAVA_OPTS
+          value: "-Dconfig.resource=endpoint-application-k8s.conf"
+        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.18
         #health
         readinessProbe:
           httpGet:
@@ -33,17 +37,9 @@ spec:
           initialDelaySeconds: 90
           periodSeconds: 30
         #health
-        env:
-        - name: HOSTNAME
-          valueFrom:
-              fieldRef:
-                apiVersion: v1
-                fieldPath: status.podIP
-        - name: DB_HOST
-          value: "192.168.122.242"
-        - name: JAVA_OPTS
-          value: "-Dconfig.resource=cluster-application-k8s-multi-dc.conf"
+        name: endpoint
         ports:
+        - containerPort: 8082
         # akka remoting
         - name: remoting
           containerPort: 2552
@@ -54,5 +50,6 @@ spec:
           protocol: TCP
         - name: node-metrics
           containerPort: 9001
+        resources: {}
       restartPolicy: Always
-
+status: {}

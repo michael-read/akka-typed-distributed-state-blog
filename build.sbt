@@ -12,7 +12,7 @@ lazy val akkaEnhancementsVersion = "1.1.16"
 lazy val akkaYugaByteVersion = "0.7.1"
 
 name := "akka-typed-distributed-state-blog"
-ThisBuild / version := "0.1.9"
+ThisBuild / version := "0.1.18"
 ThisBuild / organization := "com.lightbend"
 ThisBuild / scalaVersion := "2.13.6"
 ThisBuild / scalacOptions += "-deprecation"

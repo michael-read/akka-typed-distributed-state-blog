@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nginx-ingress-microk8s-controller
+  namespace: ingress
+spec:
+  template:
+    spec:
+      containers:
+        - name: nginx-ingress-microk8s
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+            - name: proxied-tcp-6379
+              containerPort: 6379
+              hostPort: 6379
+              protocol: TCP

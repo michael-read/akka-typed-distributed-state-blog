@@ -12,12 +12,15 @@ import akka.http.scaladsl.server.Directives.{concat, handle}
 import akka.http.scaladsl.server.Route
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
+import akka.persistence.typed.ReplicaId
 import akka.{Done, NotUsed, actor}
 import com.lightbend.artifactstate.actors.ArtifactStateEntityActor.{ArtifactCommand, ArtifactStatesShardName}
 import com.lightbend.artifactstate.actors.{ArtifactStateEntityActor, ClusterListenerActor}
 import com.lightbend.artifactstate.endpoint.{ArtifactStateRoutes, ArtifactStateServiceHandler, GrpcArtifactStateServiceImpl}
 import com.typesafe.config.ConfigFactory
 
+import scala.collection.immutable.Map
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object StartNode {
@@ -27,19 +30,33 @@ object StartNode {
     val clusterName = appConfig.getString("clustering.cluster.name")
     val clusterPort = appConfig.getInt("clustering.port")
     val defaultPort = appConfig.getInt("clustering.defaultPort")
+    val dataCenter = if (appConfig.hasPath("akka.cluster.multi-data-center.self-data-center")) {
+      ReplicaId(appConfig.getString("akka.cluster.multi-data-center.self-data-center"))
+    }
+    else {
+      ReplicaId("dc-default")
+    }
+    var dcsConfigs = Map[ReplicaId, String]()
+    if (appConfig.hasPath("clustering.allDataCenters")) {
+      val dcs = appConfig.getStringList("clustering.allDataCenters")
+      dcs.forEach(dc => {
+        dcsConfigs += (ReplicaId(dc) -> s"journal-${dc}")
+      })
+    }
+
     if (appConfig.hasPath("clustering.ports")) {
       val clusterPorts = appConfig.getIntList("clustering.ports")
       clusterPorts.forEach { port =>
-        startNode(RootBehavior(port, defaultPort), clusterName)
+        startNode(RootBehavior(port, defaultPort, dataCenter, dcsConfigs), clusterName)
       }
     }
     else {
-      startNode(RootBehavior(clusterPort, defaultPort), clusterName)
+      startNode(RootBehavior(clusterPort, defaultPort, dataCenter, dcsConfigs), clusterName)
     }
   }
 
   private object RootBehavior {
-    def apply(port: Int, defaultPort: Int): Behavior[NotUsed] =
+    def apply(port: Int, defaultPort: Int, dataCenter: ReplicaId, allDataCenters: Map[ReplicaId, String]): Behavior[NotUsed] =
       Behaviors.setup { context =>
         implicit val classicSystem: actor.ActorSystem = TypedActorSystemOps(context.system).toClassic
 
@@ -59,15 +76,16 @@ object StartNode {
 
         if (cluster.selfMember.hasRole("sharded")) {
           ClusterSharding(context.system).init(Entity(TypeKey)
-          (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId))
-            .withSettings(ClusterShardingSettings(context.system).withRole("sharded")))
+          (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId, dataCenter, allDataCenters))
+            .withSettings(ClusterShardingSettings(context.system).withRole("sharded").withDataCenter(dataCenter.id)))
         }
         else {
           if (cluster.selfMember.hasRole("endpoint")) {
             implicit val ec: ExecutionContextExecutor = context.system.executionContext
             val psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]] =
               ClusterSharding(context.system).init(Entity(TypeKey)
-              (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId)))
+              (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId, dataCenter, allDataCenters))
+                .withSettings(ClusterShardingSettings(context.system).withDataCenter(dataCenter.id)))
 
             lazy val routes: Route = new ArtifactStateRoutes(context.system, psCommandActor).psRoutes
             val httpPort = context.system.settings.config.getString("akka.http.server.default-http-port")
