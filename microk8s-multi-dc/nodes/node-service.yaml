@@ -9,5 +9,10 @@ spec:
       protocol: TCP
       port: 8558
       targetPort: akka-mgmt-http
+    - name: remoting
+      protocol: TCP
+      port: 2552
+      targetPort: remoting
+
   selector:
     tag: clusternode

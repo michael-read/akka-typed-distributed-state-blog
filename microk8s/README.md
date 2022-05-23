@@ -1,6 +1,6 @@
 # Running the PoC on Microk8s
 
-Microk8s is my new favorite way to run a local copy of k8s over Minikube. 
+Microk8s is my new favorite way to run a local copy of k8s over Minikube.
 
 [Micro8s](https://microk8s.io/) is a K8s distribution from Canonical, who are also known for their popular Linux distribution, Ubuntu. Microk8s is a small, fast, and fully-conformant K8s that makes clustering trivial. It’s a perfect environment for offline development, prototyping, and testing and we’ll be using it for the remainder of this guide.
 
@@ -14,7 +14,7 @@ microk8s inspect
 To run Akka Data Pipelines and the example on microk8s, install the following add-ons:
 
 * CoreDNS
-* helm3 - Kubernetes package manager 
+* helm3 - Kubernetes package manager
 * Storage class - allocates storage from host directory
 * traefik - Ingress controller for external access
 * registry - a private image registry and expose it on localhost:32000.
@@ -44,7 +44,7 @@ Traefik provides a great new HTTP ingress, which also happens to support gRPC, s
 
 ## Akka Management - Cluster HTTP Management
 
-An ingress has been provided to the Cluster HTTP Management module for the Akka Cluster. For example, to see the status of the cluster you can use the following: 
+An ingress has been provided to the Cluster HTTP Management module for the Akka Cluster. For example, to see the status of the cluster you can use the following:
 
 ```
 curl localhost:8080/cluster/members | python -m json.tool
@@ -78,15 +78,24 @@ k apply -f endpoints
 ```
 7. before putting any load on the sytem issue the following command to make sure the Cassandra tables have been created.
 ```
-curl -d '{"artifactId":1, "userId":"Michael"}' -H "Content-Type: application/json" -X POST localhost:8080/artifactState/setArtifactReadByUser
-
-curl 'localhost:8080/artifactState/getAllStates?artifactId=1&userId=Michael'
+curl -d '{"artifactId":1, "userId":"Michael"}' -H "Content-Type: application/json" -X POST http://localhost:8080/artifactState/setArtifactReadByUser
+curl -d '{"artifactId":1, "userId":"Michael"}' -H "Content-Type: application/json" -X POST http://localhost:8080/artifactState/isArtifactReadByUser
+curl -d '{"artifactId":1, "userId":"Michael"}' -H "Content-Type: application/json" -X POST http://localhost:8080/artifactState/setArtifactAddedToUserFeed
+curl -d '{"artifactId":1, "userId":"Michael"}' -H "Content-Type: application/json" -X POST http://localhost:8080/artifactState/isArtifactInUserFeed
+curl -d '{"artifactId":1, "userId":"Michael"}' -H "Content-Type: application/json" -X POST http://localhost:8080/artifactState/setArtifactRemovedFromUserFeed
+curl -d '{"artifactId":1, "userId":"Michael"}' -H "Content-Type: application/json" -X POST http://localhost:8080/artifactState/getAllStates
 ```
-You can also test the gRPC endpoints:
+You can also list the gRPC service(s):
 ```
 grpcurl -plaintext localhost:8080 list
+```
+You can describe the gRPC service:
+```
 grpcurl -plaintext localhost:8080 describe ArtifactStateService
+```
 
+You can also test the gRPC endpoints:
+```
 grpcurl -plaintext  -d '{"artifactId":1, "userId":"Michael"}' localhost:8080 ArtifactStateService/GetAllStates
 ```
 8. You can also follow the logs for all the nodes with one command:

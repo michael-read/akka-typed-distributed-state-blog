@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: yugabyte-db
+  name: yugabyte-db-dc2
 spec:
   clusterIP: None
   ports:
     - protocol: TCP
       port: 5433
       targetPort: 5433
-      name: yugabyte-db
+      name: yugabyte-db-dc2
 #  type: ExternalName
 #  externalName: dc1-yb.vm

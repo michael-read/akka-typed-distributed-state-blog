@@ -18,7 +18,7 @@ spec:
       serviceAccountName: nodes-sa
       containers:
       - name: node
-        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.15
+        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.20
         #health
         readinessProbe:
           httpGet:
@@ -39,13 +39,16 @@ spec:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.podIP
-        - name: DB_HOST
-#          value: "yb-tserver-service.yb-demo.svc.cluster.local"
-          value: "yugabyte-db"
+        - name: DB_HOST_DC1
+          value: "yugabyte-db-dc1"
+        - name: DB_HOST_DC2
+          value: "yugabyte-db-dc2"
         - name: APP-VERSION
-          value: "0.1.15"
+          value: "0.1.20"
         - name: DATA-CENTER
           value: "dc2"
+        - name: DATA-CENTER-HOST
+          value: "dc2.vm"
         - name: ALL-DATA-CENTERS
           value: "dc1,dc2"
         - name: JAVA_OPTS

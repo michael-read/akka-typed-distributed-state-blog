@@ -38,10 +38,9 @@ object StartNode {
     }
     var dcsConfigs = Map[ReplicaId, String]()
     if (appConfig.hasPath("clustering.allDataCenters")) {
-      val dcs = appConfig.getStringList("clustering.allDataCenters")
-      dcs.forEach(dc => {
+      appConfig.getString("clustering.allDataCenters").split(",").map { dc =>
         dcsConfigs += (ReplicaId(dc) -> s"journal-${dc}")
-      })
+      }
     }
 
     if (appConfig.hasPath("clustering.ports")) {
