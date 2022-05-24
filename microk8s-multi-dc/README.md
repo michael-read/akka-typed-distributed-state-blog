@@ -19,12 +19,14 @@ k apply -f dbs/
 k apply -f nodes-dc1/
 k apply -f nodes/
 k apply -f endpoints/
+k apply -f endpoints-dc1/
 
 ### To delete
 k delete -f dbs/
 k delete -f nodes-dc1/
 k delete -f nodes/
 k delete -f endpoints/
+k delete -f endpoints-dc1/
 
 ## On DC2
 
@@ -33,9 +35,11 @@ k apply -f dbs/
 k apply -f nodes-dc2/
 k apply -f nodes/
 k apply -f endpoints/
+k apply -f endpoints-dc2/
 
 ### To delete
 k delete -f dbs/
 k delete -f nodes-dc2/
 k delete -f nodes/
 k delete -f endpoints/
+k delete -f endpoints-dc2/

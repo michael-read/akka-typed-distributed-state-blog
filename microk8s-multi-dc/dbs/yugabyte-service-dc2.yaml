@@ -8,6 +8,6 @@ spec:
     - protocol: TCP
       port: 5433
       targetPort: 5433
-      name: yugabyte-db-dc2
+      name: yugabyte-db-dc1
 #  type: ExternalName
 #  externalName: dc1-yb.vm

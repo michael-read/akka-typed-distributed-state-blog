@@ -7,4 +7,4 @@ subsets:
       - ip: 192.168.122.193
     ports:
       - port: 5433
-        name: yugabyte-db-dc2
+        name: yugabyte-db-dc1

@@ -68,12 +68,20 @@ object ArtifactStateEntityActor {
   def apply(
              entityId: String,
              replicaId: ReplicaId,
-             allReplicas: Map[ReplicaId, String]
+             allReplicas: Set[ReplicaId],
+             queryPluginId: String
            ): Behavior[ArtifactCommand] = Behaviors.setup[ArtifactCommand] { ctx =>
-    ReplicatedEventSourcing.perReplicaJournalConfig(
+/*    ReplicatedEventSourcing.perReplicaJournalConfig(
       ReplicationId(ArtifactStatesShardName, entityId, replicaId),
       allReplicas) { replicationContext =>
-      new ArtifactStateEntityActor(ctx, replicationContext, entityId: String, replicaId, allReplicas: Map[ReplicaId, String])
+      new ArtifactStateEntityActor(ctx, replicationContext, entityId: String, replicaId, allReplicas)
+        .behavior()
+    }*/
+    ReplicatedEventSourcing.commonJournalConfig(
+      ReplicationId(ArtifactStatesShardName, entityId, replicaId),
+      allReplicas,
+      queryPluginId) { replicationContext =>
+      new ArtifactStateEntityActor(ctx, replicationContext, entityId: String, replicaId, allReplicas)
         .behavior()
     }
   }
@@ -85,7 +93,7 @@ class ArtifactStateEntityActor(
       replicationContext: ReplicationContext,
       entityId: String,
       replicaId: ReplicaId,
-      allReplicas: Map[ReplicaId, String]
+      allReplicas: Set[ReplicaId]
   ) {
 
   import ArtifactStateEntityActor._

@@ -19,8 +19,6 @@ import com.lightbend.artifactstate.actors.{ArtifactStateEntityActor, ClusterList
 import com.lightbend.artifactstate.endpoint.{ArtifactStateRoutes, ArtifactStateServiceHandler, GrpcArtifactStateServiceImpl}
 import com.typesafe.config.ConfigFactory
 
-import scala.collection.immutable.Map
-import scala.collection.mutable
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object StartNode {
@@ -36,27 +34,35 @@ object StartNode {
     else {
       ReplicaId("dc-default")
     }
-    var dcsConfigs = Map[ReplicaId, String]()
+    var dcsConfigs = Set[ReplicaId]()
     if (appConfig.hasPath("clustering.allDataCenters")) {
       appConfig.getString("clustering.allDataCenters").split(",").map { dc =>
-        dcsConfigs += (ReplicaId(dc) -> s"journal-${dc}")
+        dcsConfigs += ReplicaId(dc)
       }
     }
+
+    val queryPluginId = appConfig.getString("clustering.queryPluginId")
+
 
     if (appConfig.hasPath("clustering.ports")) {
       val clusterPorts = appConfig.getIntList("clustering.ports")
       clusterPorts.forEach { port =>
-        startNode(RootBehavior(port, defaultPort, dataCenter, dcsConfigs), clusterName)
+        startNode(RootBehavior(port, defaultPort, dataCenter, dcsConfigs, queryPluginId), clusterName)
       }
     }
     else {
-      startNode(RootBehavior(clusterPort, defaultPort, dataCenter, dcsConfigs), clusterName)
+      startNode(RootBehavior(clusterPort, defaultPort, dataCenter, dcsConfigs, queryPluginId), clusterName)
     }
   }
 
   private object RootBehavior {
-    def apply(port: Int, defaultPort: Int, dataCenter: ReplicaId, allDataCenters: Map[ReplicaId, String]): Behavior[NotUsed] =
+    def apply(port: Int, defaultPort: Int, dataCenter: ReplicaId, allDataCenters: Set[ReplicaId], queryPluginId: String): Behavior[NotUsed] =
       Behaviors.setup { context =>
+
+        context.log.info(s"init RootBehavior: data center: $dataCenter")
+        context.log.info(s"init RootBehavior: all data centers: $allDataCenters")
+        context.log.info(s"init RootBehavior: queryPluginId: $queryPluginId")
+
         implicit val classicSystem: actor.ActorSystem = TypedActorSystemOps(context.system).toClassic
 
         val TypeKey = EntityTypeKey[ArtifactCommand](ArtifactStatesShardName)
@@ -75,7 +81,7 @@ object StartNode {
 
         if (cluster.selfMember.hasRole("sharded")) {
           ClusterSharding(context.system).init(Entity(TypeKey)
-          (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId, dataCenter, allDataCenters))
+          (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId, dataCenter, allDataCenters, queryPluginId))
             .withSettings(ClusterShardingSettings(context.system).withRole("sharded").withDataCenter(dataCenter.id)))
         }
         else {
@@ -83,7 +89,7 @@ object StartNode {
             implicit val ec: ExecutionContextExecutor = context.system.executionContext
             val psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]] =
               ClusterSharding(context.system).init(Entity(TypeKey)
-              (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId, dataCenter, allDataCenters))
+              (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId, dataCenter, allDataCenters, queryPluginId))
                 .withSettings(ClusterShardingSettings(context.system).withDataCenter(dataCenter.id)))
 
             lazy val routes: Route = new ArtifactStateRoutes(context.system, psCommandActor).psRoutes

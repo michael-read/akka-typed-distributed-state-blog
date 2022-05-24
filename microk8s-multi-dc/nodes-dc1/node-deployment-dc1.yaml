@@ -18,7 +18,7 @@ spec:
       serviceAccountName: nodes-sa
       containers:
       - name: node
-        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.20
+        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.26
         #health
         readinessProbe:
           httpGet:
@@ -41,16 +41,14 @@ spec:
                 fieldPath: status.podIP
         - name: DB_HOST_DC1
           value: "yugabyte-db-dc1"
-        - name: DB_HOST_DC2
-          value: "yugabyte-db-dc2"
         - name: APP-VERSION
-          value: "0.1.20"
+          value: "0.1.21"
         - name: DATA-CENTER
           value: "dc1"
-        - name: DATA-CENTER-HOST
-          value: "dc1.vm"
         - name: ALL-DATA-CENTERS
           value: "dc1,dc2"
+        - name: QUERY_PLUGIN_ID
+          value: "akka.persistence.r2dbc.query"
         - name: JAVA_OPTS
           value: "-Dconfig.resource=cluster-application-k8s-multi-dc.conf"
         ports:
