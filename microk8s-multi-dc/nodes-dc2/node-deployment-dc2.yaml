@@ -40,7 +40,7 @@ spec:
                 apiVersion: v1
                 fieldPath: status.podIP
         - name: DB_HOST_DC1
-          value: "yugabyte-db-dc1"
+          value: "yugabyte-db-dc2"
         - name: APP-VERSION
           value: "0.1.21"
         - name: DATA-CENTER
