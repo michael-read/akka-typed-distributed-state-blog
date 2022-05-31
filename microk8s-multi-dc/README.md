@@ -41,6 +41,10 @@ k apply -f nodes/
 k apply -f endpoints/
 k apply -f endpoints-dc1/
 
+
+### Verify Akka Cluster Formation
+curl dc1.vm:8080/cluster/members | python -m json.tool
+
 ### To delete
 k delete -f dbs-dc1/
 k delete -f nodes-dc1/
@@ -57,6 +61,10 @@ k apply -f nodes-dc2/
 k apply -f nodes/
 k apply -f endpoints/
 k apply -f endpoints-dc2/
+
+### Verify Akka Cluster Formation
+curl dc2.vm:8080/cluster/members | python -m json.tool
+
 
 ### To delete
 k delete -f dbs-dc2/
