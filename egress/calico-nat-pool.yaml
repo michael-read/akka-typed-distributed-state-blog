@@ -1,8 +1,0 @@
-#apiVersion: projectcalico.org/v3
-apiVersion: crd.projectcalico.org/v1
-kind: IPPool
-metadata:
-  name: local-ipv4-ippool
-spec:
-  cidr: 192.168.0.0/16
-  natOutgoing: true
