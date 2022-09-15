@@ -22,7 +22,7 @@ spec:
       - env:
         - name: JAVA_OPTS
           value: "-Dconfig.resource=endpoint-application-k8s.conf"
-        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.14
+        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.4
         #health
         readinessProbe:
           httpGet:

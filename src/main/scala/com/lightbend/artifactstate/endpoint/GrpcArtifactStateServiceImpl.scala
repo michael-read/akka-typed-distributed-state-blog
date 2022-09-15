@@ -124,5 +124,6 @@ class GrpcArtifactStateServiceImpl(system: ActorSystem[Nothing], psCommandActor:
         Future.successful(StreamedResponse(failureMsg = errMsg, command = Some(command)))
       }
     }
+    .named("commandsStreamedIn")
   }
 }
