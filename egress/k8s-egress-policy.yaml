@@ -1,0 +1,13 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-external
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: ArtifactStateCluster
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 192.168.0.0/16
