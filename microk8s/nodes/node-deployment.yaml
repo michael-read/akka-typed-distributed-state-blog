@@ -18,7 +18,7 @@ spec:
       serviceAccountName: nodes-sa
       containers:
       - name: node
-        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.4
+        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.3
         #health
         readinessProbe:
           httpGet:
