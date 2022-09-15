@@ -9,6 +9,11 @@ In this four part blog series, we walk you through a working Proof of Concept (P
 - [Part 4](https://www.lightbend.com/blog/how-to-distribute-application-state-with-akka-cluster-part-4-the-source-code) - Source Code: In our final installment, we do a deep dive into our Scala source code.
 > Note: This repoistory is written for **Scala** developers, a **Java** version  can be found [here](https://github.com/michael-read/akka-typed-distributed-state-blog-java). 	
 ----------------
+## Update September 15, 2022
+- update Akka related dependencies to latest
+- Moved to Java 17 base image
+- Set up for Akka DNS cluster formation on Docker w/ Yugabyte. Doc [here](DOCKER_DNS_YUGABYTE.md).
+ 
 ## Update: April 18, 2022
 - Updated Akka, Akka Http, and Akka gRPC dependencies with the latest versions
 - recreated the missing gRPC Client (ArtifactStateForEach) example for request / response
