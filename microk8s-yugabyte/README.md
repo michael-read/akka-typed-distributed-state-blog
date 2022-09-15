@@ -15,7 +15,7 @@ To run Akka Data Pipelines and the example on microk8s, install the following ad
 
 * CoreDNS
 * helm3 - Kubernetes package manager 
-* Storage class - allocates storage from host directory
+* hostpath-storage - allocates storage from host directory
 * traefik - Ingress controller for external access
 * registry - a private image registry and expose it on localhost:32000.
 
@@ -25,7 +25,7 @@ Enable the Microk8s add-ons with the following commands in your terminal window:
 ```
 microk8s enable dns
 microk8s enable helm3
-microk8s enable storage
+microk8s enable hostpath-storage
 microk8s enable traefik
 microk8s enable registry
 ```

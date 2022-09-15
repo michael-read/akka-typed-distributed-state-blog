@@ -11,14 +11,16 @@ sudo hostnamectl set-hostname dc3-yb.vm
 ```
 # Install Microk8s and enable Microk8s Add-ons on DC1 & DC2 (dc1.vm & dc2.vm)
 
+```
 microk8s enable community
 microk8s enable dns
 microk8s enable helm3
 microk8s enable rbac
 microk8s enable registry
-microk8s enable storage
+microk8s enable hostpath-storage
 microk8s enable traefik
 microk8s enable ingress
+```
 
 # create a Yugabyte three node universe
 
