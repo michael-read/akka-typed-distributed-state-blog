@@ -74,7 +74,7 @@ object StartNode {
           context.log.info(s"role : $role")
         }
 
-        if (cluster.selfMember.hasRole("k8s") || cluster.selfMember.hasRole("dns")) {
+        if (cluster.selfMember.hasRole("k8s")) {
           AkkaManagement(classicSystem).start()
           ClusterBootstrap(classicSystem).start()
         }
@@ -94,9 +94,7 @@ object StartNode {
 
             lazy val routes: Route = new ArtifactStateRoutes(context.system, psCommandActor).psRoutes
             val httpPort = context.system.settings.config.getString("akka.http.server.default-http-port")
-            val interface = if (cluster.selfMember.hasRole("docker")
-              || cluster.selfMember.hasRole("k8s")
-              || cluster.selfMember.hasRole("dns")) {
+            val interface = if (cluster.selfMember.hasRole("docker") || cluster.selfMember.hasRole("k8s")) {
               "0.0.0.0"
             }
             else {
@@ -115,13 +113,13 @@ object StartNode {
             // Both HTTP and gRPC Binding
             val binding = Http().newServerAt(interface, httpPort.toInt).bind(route)
 
-            binding.foreach { binding => context.system.log.info(s"HTTP / gRPC Server online at ip ${binding.localAddress} port $httpPort") }
+            binding.foreach { binding => println(s"HTTP / gRPC Server online at ip ${binding.localAddress} port $httpPort") }
           }
         }
 
         if (port == defaultPort) {
           context.spawn(ClusterListenerActor(), "clusterListenerActor")
-          context.system.log.info("started clusterListenerActor")
+          context.log.info("started clusterListenerActor")
         }
 
         Behaviors.empty
