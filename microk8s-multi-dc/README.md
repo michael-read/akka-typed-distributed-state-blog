@@ -78,13 +78,13 @@ sbt docker:publishLocal
 ```
 2. Tag the image, for transfer to dc1.vm, and dc2.vm. For example,
 ```
-docker tag <container id> dc1.vm:32000/akka-typed-blog-distributed-state/cluster:1.1.1
-docker tag <container id> dc2.vm:32000/akka-typed-blog-distributed-state/cluster:1.1.1
+docker tag <container id> dc1.vm:32000/akka-typed-blog-distributed-state/cluster:0.1.4
+docker tag <container id> dc2.vm:32000/akka-typed-blog-distributed-state/cluster:0.1.4
 ```
 3. Push the respective images
 ```
-docker push dc1.vm:32000/akka-typed-blog-distributed-state/cluster:1.1.1
-docker push dc2.vm:32000/akka-typed-blog-distributed-state/cluster:1.1.1
+docker push dc1.vm:32000/akka-typed-blog-distributed-state/cluster:0.1.4
+docker push dc2.vm:32000/akka-typed-blog-distributed-state/cluster:0.1.4
 ```
 
 Pushing to this insecure registry may fail in some versions of Docker unless the daemon is explicitly configured to trust this registry. To address this we need to edit /etc/docker/daemon.json and add:
