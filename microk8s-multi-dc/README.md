@@ -71,20 +71,17 @@ bin/ysqlsh -h dc1-yb.vm  -U yugabyte -d yugabyte
 6. Copy and paste the schemas from the [Yugabyte] tab from [here](https://doc.akka.io/docs/akka-persistence-r2dbc/current/getting-started.html#creating-the-schema), and paste into ysql.
 
 ## Build Docker Image and Push to the Registry
-1. Set the pom.xml to skip tests on line #28:
-```
-        <tests.skip>true</tests.skip>
-```
-2. Build the image to your local Docker registry.
+
+1. Build the image to your local Docker registry.
 ```
 sbt docker:publishLocal
 ```
-3. Tag the image, for transfer to dc1.vm, and dc2.vm. For example,
+2. Tag the image, for transfer to dc1.vm, and dc2.vm. For example,
 ```
 docker tag <container id> dc1.vm:32000/akka-typed-blog-distributed-state/cluster:1.1.1
 docker tag <container id> dc2.vm:32000/akka-typed-blog-distributed-state/cluster:1.1.1
 ```
-4. Push the respective images
+3. Push the respective images
 ```
 docker push dc1.vm:32000/akka-typed-blog-distributed-state/cluster:1.1.1
 docker push dc2.vm:32000/akka-typed-blog-distributed-state/cluster:1.1.1
