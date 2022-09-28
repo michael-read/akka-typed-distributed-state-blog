@@ -14,11 +14,12 @@ spec:
         tag: clusternode
       annotations:
         prometheus.io/scrape: 'true'
+        prometheus.io/port:   '9001'
     spec:
       serviceAccountName: nodes-sa
       containers:
       - name: node
-        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.26
+        image: localhost:32000/akka-typed-blog-distributed-state/cluster:latest
         #health
         readinessProbe:
           httpGet:
@@ -50,6 +51,8 @@ spec:
         - name: QUERY_PLUGIN_ID
           value: "akka.persistence.r2dbc.query"
         - name: JAVA_OPTS
+          value: "-Dconfig.resource=cluster-application-k8s-multi-dc.conf"
+        - name: JAVA_TOOL_OPTIONS
           value: "-Dconfig.resource=cluster-application-k8s-multi-dc.conf"
         ports:
         # akka remoting

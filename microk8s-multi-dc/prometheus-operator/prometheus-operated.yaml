@@ -1,0 +1,11 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: artifactstate-svc-monitor
+  namespace: default
+spec:
+  serviceAccountName: prometheus-sa
+  serviceMonitorSelector:
+    matchLabels:
+      app: artifactstate
+  enableAdminAPI: false

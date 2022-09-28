@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: endpoint
+  labels:
+    app-monitoring: artifactstate
 spec:
   type: ClusterIP
   ports:
@@ -13,5 +15,8 @@ spec:
       protocol: TCP
       port: 8558
       targetPort: akka-mgmt-http
+    - name: node-metrics
+      port: 9001
+      targetPort: node-metrics
   selector:
     tag: endpoint

@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: endpoint
+  labels:
+    app-monitoring: artifactstate
 spec:
   type: ClusterIP
   ports:
