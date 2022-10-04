@@ -41,7 +41,7 @@ spec:
                 apiVersion: v1
                 fieldPath: status.podIP
         - name: DB_HOST_DC1
-          value: "yugabyte-db-dc2"
+          value: "yugabyte-db-dc2" # Service Name of Egress
         - name: APP-VERSION
           value: "0.1.21"
         - name: DATA-CENTER
@@ -50,7 +50,13 @@ spec:
           value: "dc1,dc2"
         - name: QUERY_PLUGIN_ID
           value: "akka.persistence.r2dbc.query"
+        - name: SNAPSHOT_ON_NR_EVENTS
+          value: "5"
+        - name: KEEP_N_SNAPSHOTS
+          value: "3"
         - name: JAVA_OPTS
+          value: "-Dconfig.resource=cluster-application-k8s-multi-dc.conf"
+        - name: JAVA_TOOL_OPTIONS
           value: "-Dconfig.resource=cluster-application-k8s-multi-dc.conf"
         ports:
         # akka remoting

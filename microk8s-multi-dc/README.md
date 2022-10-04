@@ -65,10 +65,19 @@ wget https://downloads.yugabyte.com/releases/2.12.2.0/yugabyte-2.12.2.0-b58-linu
 ./bin/yugabyted start --listen=dc3-yb.vm --join=dc1-yb.vm
 ```
 5. on dc1-yb.vm connect using ysql:
+Start the YSQL client:
 ```
 bin/ysqlsh -h dc1-yb.vm  -U yugabyte -d yugabyte
 ```
-6. Copy and paste the schemas from the [Yugabyte] tab from [here](https://doc.akka.io/docs/akka-persistence-r2dbc/current/getting-started.html#creating-the-schema), and paste into ysql.
+6. Create the "akka" schema:
+```
+yugabyte=# CREATE SCHEMA akka;
+```
+Set the default schema:
+```
+yugabyte=# SET search_path=akka;
+```
+7. Copy and paste the schemas from the [Yugabyte] tab from [here](https://doc.akka.io/docs/akka-persistence-r2dbc/current/getting-started.html#creating-the-schema), and paste into ysql.
 
 ## Build Docker Image and Push to the Registry
 
@@ -78,13 +87,13 @@ sbt docker:publishLocal
 ```
 2. Tag the image, for transfer to dc1.vm, and dc2.vm. For example,
 ```
-docker tag <container id> dc1.vm:32000/akka-typed-blog-distributed-state/cluster:0.1.4
-docker tag <container id> dc2.vm:32000/akka-typed-blog-distributed-state/cluster:0.1.4
+docker tag <container id> dc1.vm:32000/akka-typed-blog-distributed-state/cluster:latest
+docker tag <container id> dc2.vm:32000/akka-typed-blog-distributed-state/cluster:latest
 ```
 3. Push the respective images
 ```
-docker push dc1.vm:32000/akka-typed-blog-distributed-state/cluster:0.1.4
-docker push dc2.vm:32000/akka-typed-blog-distributed-state/cluster:0.1.4
+docker push dc1.vm:32000/akka-typed-blog-distributed-state/cluster:latest
+docker push dc2.vm:32000/akka-typed-blog-distributed-state/cluster:latest
 ```
 
 Pushing to this insecure registry may fail in some versions of Docker unless the daemon is explicitly configured to trust this registry. To address this we need to edit /etc/docker/daemon.json and add:
@@ -111,6 +120,7 @@ k apply -f nodes-dc1/
 k apply -f nodes/
 k apply -f endpoints/
 k apply -f endpoints-dc1/
+k apply -f prometheus-operator/
 ```
 
 ### Verify Akka Cluster Formation
@@ -123,7 +133,9 @@ k delete -f nodes-dc1/
 k delete -f nodes/
 k delete -f endpoints/
 k delete -f endpoints-dc1/
+k delete -f prometheus-operator/
 ```
+
 
 ## On DC2 (dc2.vm)
 1. Copy the microk8s-multi-dc directory to both dc2.vm via sftp (think FileZilla).
@@ -137,6 +149,7 @@ k apply -f nodes-dc2/
 k apply -f nodes/
 k apply -f endpoints/
 k apply -f endpoints-dc2/
+k apply -f prometheus-operator/
 ```
 
 ### Verify Akka Cluster Formation
@@ -150,6 +163,7 @@ k delete -f nodes-dc2/
 k delete -f nodes/
 k delete -f endpoints/
 k delete -f endpoints-dc2/
+k delete -f prometheus-operator/
 ```
 
 # Sample REST Calls

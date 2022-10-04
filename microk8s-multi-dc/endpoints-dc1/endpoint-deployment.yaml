@@ -29,6 +29,10 @@ spec:
           value: "dc1,dc2"
         - name: QUERY_PLUGIN_ID
           value: "akka.persistence.r2dbc.query"
+        - name: SNAPSHOT_ON_NR_EVENTS
+          value: "5"
+        - name: KEEP_N_SNAPSHOTS
+          value: "3"
         - name: JAVA_OPTS
           value: "-Dconfig.resource=endpoint-application-k8s-multi-dc.conf"
         - name: JAVA_TOOL_OPTIONS

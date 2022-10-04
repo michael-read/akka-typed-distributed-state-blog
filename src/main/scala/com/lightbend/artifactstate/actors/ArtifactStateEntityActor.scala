@@ -2,8 +2,8 @@ package com.lightbend.artifactstate.actors
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplicatedEventSourcing, ReplicationContext}
-import akka.persistence.typed.{PersistenceId, ReplicaId, ReplicationId}
+import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, Recovery, ReplicatedEventSourcing, ReplicationContext, RetentionCriteria}
+import akka.persistence.typed.{PersistenceId, ReplicaId, ReplicationId, SnapshotSelectionCriteria}
 import com.lightbend.artifactstate.actors.ArtifactStateEntityActor.ArtifactCommand
 import com.lightbend.artifactstate.serializer.{EventSerializeMarker, MsgSerializeMarker}
 
@@ -69,7 +69,9 @@ object ArtifactStateEntityActor {
              entityId: String,
              replicaId: ReplicaId,
              allReplicas: Set[ReplicaId],
-             queryPluginId: String
+             queryPluginId: String,
+             snapShotOnNrEvents: Int,
+             keepNSnapshots: Int
            ): Behavior[ArtifactCommand] = Behaviors.setup[ArtifactCommand] { ctx =>
 /*    ReplicatedEventSourcing.perReplicaJournalConfig(
       ReplicationId(ArtifactStatesShardName, entityId, replicaId),
@@ -81,7 +83,8 @@ object ArtifactStateEntityActor {
       ReplicationId(ArtifactStatesShardName, entityId, replicaId),
       allReplicas,
       queryPluginId) { replicationContext =>
-      new ArtifactStateEntityActor(ctx, replicationContext, entityId: String, replicaId, allReplicas)
+      new ArtifactStateEntityActor(ctx, replicationContext, entityId: String,
+        replicaId, allReplicas, snapShotOnNrEvents, keepNSnapshots)
         .behavior()
     }
   }
@@ -93,7 +96,9 @@ class ArtifactStateEntityActor(
       replicationContext: ReplicationContext,
       entityId: String,
       replicaId: ReplicaId,
-      allReplicas: Set[ReplicaId]
+      allReplicas: Set[ReplicaId],
+      snapShotOnNrEvents: Int,
+      keepNSnapshots: Int
   ) {
 
   import ArtifactStateEntityActor._
@@ -103,7 +108,8 @@ class ArtifactStateEntityActor(
     emptyState = CurrState(),
     commandHandler,
     eventHandler)
-
+    .withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = snapShotOnNrEvents, keepNSnapshots = keepNSnapshots))
+    .withRecovery(Recovery.withSnapshotSelectionCriteria(SnapshotSelectionCriteria.latest))
 
   private val commandHandler: (CurrState, ArtifactCommand) => Effect[ArtifactEvent, CurrState] = { (state, command) =>
     command match {
