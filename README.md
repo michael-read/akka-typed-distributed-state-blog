@@ -10,6 +10,7 @@ In this four part blog series, we walk you through a working Proof of Concept (P
 > Note: This repoistory is written for **Scala** developers, a **Java** version  can be found [here](https://github.com/michael-read/akka-typed-distributed-state-blog-java). 	
 ----------------
 ## Update October 11, 2022
+- Using a snapshot build of Akka 2.7 due to a bug in Common Journal Replicated Event Sourcing. We'll need to wait for the 2.7 release to run properly.
 - The R2DBC snapshot plugin only ever keeps *one* snapshot per persistence id in the database.
   If a `keepNSnapshots > 1` is specified for an `EventSourcedBehavior` that setting will be ignored.
 - The reason for this is that there is no real benefit to keep multiple snapshots around on a relational database with a high consistency.
