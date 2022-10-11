@@ -16,6 +16,7 @@ spec:
         tag: endpoint
       annotations:
         prometheus.io/scrape: 'true'
+        prometheus.io/port:   '9001'
     spec:
       serviceAccountName: endpoints-sa
       containers:
@@ -28,9 +29,15 @@ spec:
           value: "dc1,dc2"
         - name: QUERY_PLUGIN_ID
           value: "akka.persistence.r2dbc.query"
+        - name: SNAPSHOT_ON_NR_EVENTS
+          value: "5"
+        - name: KEEP_N_SNAPSHOTS
+          value: "3"
         - name: JAVA_OPTS
           value: "-Dconfig.resource=endpoint-application-k8s-multi-dc.conf"
-        image: localhost:32000/akka-typed-blog-distributed-state/cluster:0.1.26
+        - name: JAVA_TOOL_OPTIONS
+          value: "-Dconfig.resource=endpoint-application-k8s-multi-dc.conf"
+        image: localhost:32000/akka-typed-blog-distributed-state/cluster:latest
         #health
         readinessProbe:
           httpGet:

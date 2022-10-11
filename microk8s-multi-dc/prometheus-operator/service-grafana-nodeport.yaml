@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: observability
+spec:
+  type: NodePort
+  ports:
+    - port: 3000
+      protocol: TCP
+      targetPort: 3000
+
+  selector:
+    app.kubernetes.io/instance: kube-prom-stack
+    app.kubernetes.io/name: grafana
+

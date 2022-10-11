@@ -4,7 +4,7 @@ metadata:
   name: yugabyte-db-dc2
 subsets:
   - addresses:
-      - ip: 192.168.122.118
+      - ip: 192.168.122.60
     ports:
       - port: 5433
         name: yugabyte-db-dc2

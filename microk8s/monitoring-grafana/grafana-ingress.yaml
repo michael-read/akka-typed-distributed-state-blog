@@ -4,10 +4,21 @@ metadata:
   name: grafana-http-ingress
   namespace: monitoring
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
+  ingressClassName: public
   defaultBackend:
     service:
       name: grafana
       port:
         number: 3000
+  rules:
+    - http:
+        paths:
+          - path: /grafana(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000

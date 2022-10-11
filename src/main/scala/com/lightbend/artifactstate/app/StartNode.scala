@@ -42,26 +42,30 @@ object StartNode {
     }
 
     val queryPluginId = appConfig.getString("clustering.queryPluginId")
-
+    val snapShotOnNrEvents = appConfig.getInt("clustering.snapShotOnNrEvents")
+    val keepNSnapshots = appConfig.getInt("clustering.keepNSnapshots")
 
     if (appConfig.hasPath("clustering.ports")) {
       val clusterPorts = appConfig.getIntList("clustering.ports")
       clusterPorts.forEach { port =>
-        startNode(RootBehavior(port, defaultPort, dataCenter, dcsConfigs, queryPluginId), clusterName)
+        startNode(RootBehavior(port, defaultPort, dataCenter, dcsConfigs, queryPluginId, snapShotOnNrEvents, keepNSnapshots), clusterName)
       }
     }
     else {
-      startNode(RootBehavior(clusterPort, defaultPort, dataCenter, dcsConfigs, queryPluginId), clusterName)
+      startNode(RootBehavior(clusterPort, defaultPort, dataCenter, dcsConfigs, queryPluginId, snapShotOnNrEvents, keepNSnapshots), clusterName)
     }
   }
 
   private object RootBehavior {
-    def apply(port: Int, defaultPort: Int, dataCenter: ReplicaId, allDataCenters: Set[ReplicaId], queryPluginId: String): Behavior[NotUsed] =
+    def apply(port: Int, defaultPort: Int, dataCenter: ReplicaId, allDataCenters: Set[ReplicaId], queryPluginId: String,
+              snapShotOnNrEvents: Int, keepNSnapshots: Int): Behavior[NotUsed] =
       Behaviors.setup { context =>
 
         context.log.info(s"init RootBehavior: data center: $dataCenter")
         context.log.info(s"init RootBehavior: all data centers: $allDataCenters")
         context.log.info(s"init RootBehavior: queryPluginId: $queryPluginId")
+        context.log.info(s"init RootBehavior: snapShotOnNrEvents: $snapShotOnNrEvents")
+        context.log.info(s"init RootBehavior: keepNSnapshots: $keepNSnapshots")
 
         implicit val classicSystem: actor.ActorSystem = TypedActorSystemOps(context.system).toClassic
 
@@ -81,7 +85,7 @@ object StartNode {
 
         if (cluster.selfMember.hasRole("sharded")) {
           ClusterSharding(context.system).init(Entity(TypeKey)
-          (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId, dataCenter, allDataCenters, queryPluginId))
+          (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId, dataCenter, allDataCenters, queryPluginId, snapShotOnNrEvents, keepNSnapshots))
             .withSettings(ClusterShardingSettings(context.system).withRole("sharded").withDataCenter(dataCenter.id)))
         }
         else {
@@ -89,7 +93,7 @@ object StartNode {
             implicit val ec: ExecutionContextExecutor = context.system.executionContext
             val psCommandActor: ActorRef[ShardingEnvelope[ArtifactCommand]] =
               ClusterSharding(context.system).init(Entity(TypeKey)
-              (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId, dataCenter, allDataCenters, queryPluginId))
+              (createBehavior = ctx => ArtifactStateEntityActor(ctx.entityId, dataCenter, allDataCenters, queryPluginId, snapShotOnNrEvents, keepNSnapshots))
                 .withSettings(ClusterShardingSettings(context.system).withDataCenter(dataCenter.id)))
 
             lazy val routes: Route = new ArtifactStateRoutes(context.system, psCommandActor).psRoutes
