@@ -9,6 +9,11 @@ In this four part blog series, we walk you through a working Proof of Concept (P
 - [Part 4](https://www.lightbend.com/blog/how-to-distribute-application-state-with-akka-cluster-part-4-the-source-code) - Source Code: In our final installment, we do a deep dive into our Scala source code.
 > Note: This repoistory is written for **Scala** developers, a **Java** version  can be found [here](https://github.com/michael-read/akka-typed-distributed-state-blog-java). 	
 ----------------
+## Update October 11, 2022
+- The R2DBC snapshot plugin only ever keeps *one* snapshot per persistence id in the database.
+  If a `keepNSnapshots > 1` is specified for an `EventSourcedBehavior` that setting will be ignored.
+- The reason for this is that there is no real benefit to keep multiple snapshots around on a relational database with a high consistency.
+
 ## Update September 20, 2022
 - updated the branch `mread-multi-dc-common-journal`, which supports Akka's Replicated Event Sourcing "Common Journal" running on Multi-Data Center / Microk8s and Yugabyte. README.md can be found [here](./microk8s-multi-dc/README.md).
 

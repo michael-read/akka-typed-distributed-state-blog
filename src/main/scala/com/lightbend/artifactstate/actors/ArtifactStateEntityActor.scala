@@ -108,8 +108,15 @@ class ArtifactStateEntityActor(
     emptyState = CurrState(),
     commandHandler,
     eventHandler)
-    .withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = snapShotOnNrEvents, keepNSnapshots = keepNSnapshots))
     .withRecovery(Recovery.withSnapshotSelectionCriteria(SnapshotSelectionCriteria.latest))
+    /*
+      The R2DBC snapshot plugin only ever keeps *one* snapshot per persistence id in the database.
+      If a `keepNSnapshots > 1` is specified for an `EventSourcedBehavior` that setting will be ignored.
+
+      The reason for this is that there is no real benefit to keep multiple snapshots around on a relational
+      database with a high consistency.
+     */
+    .withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = snapShotOnNrEvents, keepNSnapshots = keepNSnapshots))
 
   private val commandHandler: (CurrState, ArtifactCommand) => Effect[ArtifactEvent, CurrState] = { (state, command) =>
     command match {
