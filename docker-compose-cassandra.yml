@@ -1,4 +1,4 @@
-version: '2.2'
+
 services:
   cassandra_db:
     hostname: cassandra-1

@@ -9,6 +9,14 @@ In this four part blog series, we walk you through a working Proof of Concept (P
 - [Part 4](https://www.lightbend.com/blog/how-to-distribute-application-state-with-akka-cluster-part-4-the-source-code) - Source Code: In our final installment, we do a deep dive into our Scala source code.
 > Note: This repoistory is written for **Scala** developers, a **Java** version  can be found [here](https://github.com/michael-read/akka-typed-distributed-state-blog-java). 	
 ----------------
+## Update(s) September, 2024
+- Move to Java 21
+- upgrade all Akka Dependencies to release v24.05.3
+- upgrade SBT to v1.10.0
+- upgrade Gatling to v3.12.0
+- fixed bug in Gatling scenario
+- migrate docker-compose & nonsup-docker-compose to use Akka Cluster Bootstrap w/ DNS instead of using Seed nodes
+
 ## Update September 20, 2022
 - updated the branch `mread-multi-dc-common-journal`, which supports Akka's Replicated Event Sourcing "Common Journal" running on Multi-Data Center / Microk8s and Yugabyte. Updated README.md can be found [here](https://github.com/michael-read/akka-typed-distributed-state-blog/tree/mread-multi-dc-common-journal/microk8s-multi-dc).
 

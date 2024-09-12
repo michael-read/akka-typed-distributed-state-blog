@@ -1,14 +1,15 @@
 package akka.cluster.typed
 
 import java.util.concurrent.ConcurrentHashMap
-
 import akka.actor.{Address, Scheduler}
 import akka.actor.typed.ActorSystem
 import akka.remote.testkit.{MultiNodeSpec, STMultiNodeSpec}
-import org.scalatest.{Matchers, Suite}
+import org.scalatest.Suite
 import akka.actor.typed.scaladsl.adapter._
 import akka.cluster.ClusterEvent
 import akka.remote.testconductor.RoleName
+import org.scalatest.matchers.should.Matchers
+
 
 import scala.language.implicitConversions
 
