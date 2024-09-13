@@ -1,21 +1,21 @@
 import com.lightbend.cinnamon.sbt.Cinnamon.CinnamonKeys.cinnamon
-import com.typesafe.sbt.SbtMultiJvm.multiJvmSettings
-import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
+import com.typesafe.sbt.MultiJvmPlugin.multiJvmSettings
 
-lazy val akkaHttpVersion = "10.2.10"
-lazy val akkaVersion     = "2.6.20"
-lazy val logbackVersion  = "1.2.3"
-lazy val akkaManagementVersion = "1.1.4"
-lazy val akkaCassandraVersion  = "1.0.5"
+lazy val akkaHttpVersion = "10.6.3"
+lazy val akkaVersion     = "2.9.5"
+lazy val logbackVersion  = "1.2.13"
+lazy val akkaManagementVersion = "1.5.2"
+lazy val akkaCassandraVersion  = "1.2.1"
 lazy val jacksonVersion  = "3.6.6"
-lazy val akkaEnhancementsVersion = "1.1.16"
-lazy val akkaYugaByteVersion = "0.7.1"
+lazy val akkaDiagnosticsVersion = "2.1.1"
+lazy val akkaR2DBCVersion = "1.2.5"
 
 name := "akka-typed-distributed-state-blog"
-ThisBuild / version := "0.1.4"
+ThisBuild / version := "1.2.0"
 ThisBuild / organization := "com.lightbend"
-ThisBuild / scalaVersion := "2.13.8"
+ThisBuild / scalaVersion := "2.13.14"
 ThisBuild / scalacOptions += "-deprecation"
+ThisBuild / resolvers += "Akka library repository".at("https://repo.akka.io/maven")
 
 // we're relying on the new credential file format for lightbend.sbt as described
 //  here -> https://www.lightbend.com/account/lightbend-platform/credentials, which
@@ -38,14 +38,16 @@ def commercialDependencies : Seq[ModuleID] = {
     Cinnamon.library.cinnamonAkkaGrpc,
     Cinnamon.library.cinnamonAkkaPersistence,
     Cinnamon.library.cinnamonJvmMetricsProducer,
+/* for Elastic Search Sandbox
     Cinnamon.library.cinnamonCHMetrics3,
     Cinnamon.library.cinnamonCHMetricsElasticsearchReporter,
+*/
+    Cinnamon.library.cinnamonCHMetrics,
+    Cinnamon.library.cinnamonCHMetricsStatsDReporter,
     Cinnamon.library.cinnamonSlf4jEvents,
     Cinnamon.library.cinnamonPrometheus,
     Cinnamon.library.cinnamonPrometheusHttpServer,
     Cinnamon.library.jmxImporter,
-    "com.lightbend.akka" %% "akka-diagnostics" % akkaEnhancementsVersion,
-    // END: this requires a commercial Lightbend Subscription
   )
 }
 
@@ -54,7 +56,7 @@ def ossDependencies : Seq[ModuleID] = {
     "com.typesafe.akka" %% "akka-remote" % akkaVersion,
     "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
-    "com.typesafe.akka" %% "akka-http2-support" % akkaHttpVersion,
+//    "com.typesafe.akka" %% "akka-http2-support" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-xml" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
@@ -62,7 +64,7 @@ def ossDependencies : Seq[ModuleID] = {
     "com.typesafe.akka" %% "akka-cluster-sharding-typed" % akkaVersion,
     "com.typesafe.akka" %% "akka-persistence-typed" % akkaVersion,
     "com.typesafe.akka" %% "akka-persistence-cassandra" % akkaCassandraVersion,
-    "com.lightbend.akka" %% "akka-persistence-r2dbc" % akkaYugaByteVersion,
+    "com.lightbend.akka" %% "akka-persistence-r2dbc" % akkaR2DBCVersion,
     "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion,
     "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
     "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
@@ -71,8 +73,6 @@ def ossDependencies : Seq[ModuleID] = {
     "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % akkaManagementVersion,
     "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % akkaManagementVersion,
     "com.lightbend.akka.management" %% "akka-management-cluster-http" % akkaManagementVersion,
-    "org.json4s" %% "json4s-jackson" % jacksonVersion,
-    "org.json4s" %% "json4s-core" % jacksonVersion,
 
     //Logback
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
@@ -85,7 +85,8 @@ def ossDependencies : Seq[ModuleID] = {
     "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
 
     "commons-io" % "commons-io" % "2.4" % Test,
-    "org.scalatest" %% "scalatest" % "3.0.8" % Test
+//    "org.scalatest" %% "scalatest" % "3.0.8" % Test
+    "org.scalatest" %% "scalatest" % "3.2.19" % "test"
   )
 }
 

@@ -1,0 +1,18 @@
+
+networks:
+  akka:
+    driver: bridge
+
+services:
+  postgres-db:
+    image: postgres:latest
+    volumes:
+      - ./ddl-scripts/create_tables_postgres.sql:/docker-entrypoint-initdb.d/10-init.sql
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - akka

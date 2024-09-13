@@ -172,7 +172,7 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
       awaitAssert {
         within(15.seconds) {
           val region = startProxySharding()
-          val probe = TestProbe[ArtifactResponse]
+          val probe = TestProbe[ArtifactResponse]()
           region ! ShardingEnvelope(artifactMember.userId, SetArtifactRead(probe.ref, artifactMember.artifactId, artifactMember.userId))
           probe.expectMessage(Okay())
         }
@@ -184,7 +184,7 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
       awaitAssert {
         within(15.seconds) {
           val region = startProxySharding()
-          val probe = TestProbe[ArtifactResponse]
+          val probe = TestProbe[ArtifactResponse]()
           region ! ShardingEnvelope(artifactMember.userId, SetArtifactAddedToUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
           probe.expectMessage(Okay())
         }
@@ -195,7 +195,7 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
     "create, and retrieve Artifact State" in within(15.seconds) {
       runOn(persistNode1) {
         val region = startProxySharding()
-        val probe = TestProbe[ArtifactResponse]
+        val probe = TestProbe[ArtifactResponse]()
         region ! ShardingEnvelope(artifactMember.userId, SetArtifactRead(probe.ref, artifactMember.artifactId, artifactMember.userId))
         region ! ShardingEnvelope(artifactMember.userId, SetArtifactAddedToUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
         awaitAssert {
@@ -212,7 +212,7 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
 
       runOn(persistNode2) {
         val region = startProxySharding()
-        val probe = TestProbe[ArtifactResponse]
+        val probe = TestProbe[ArtifactResponse]()
         region ! ShardingEnvelope(artifactMember.userId, SetArtifactRemovedFromUserFeed(probe.ref, artifactMember.artifactId, artifactMember.userId))
         awaitAssert {
           within(15.seconds) {
@@ -626,7 +626,7 @@ class ArtifactStatesWithGrpcSpec extends MultiNodeSpec(ArtifactStatesWithGrpcSpe
         val source = Source.fromIterator(() => elements.iterator)
 
         new GrpcServiceTesting(region) {
-          implicit val mat = Materializer.matFromSystem(system)
+          implicit val mat: Materializer = Materializer.matFromSystem(system)
           val responses = client.commandsStreamed(source).runWith(Sink.seq).futureValue
           responses.foreach( response => println(s"validate CommandsStreamed (gRPC) response: $response"))
 
