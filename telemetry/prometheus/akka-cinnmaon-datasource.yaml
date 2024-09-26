@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: akka-cinnamon-datasource
+  labels:
+    grafana_datasource: "1"
+    app: prometheus-operator-grafana
+data:
+  akka-datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+    - name: Cinnamon Prometheus
+      type: prometheus
+      url: http://prometheus-operator-kube-p-prometheus.monitoring:9090
+      access: proxy
+      isDefault: false

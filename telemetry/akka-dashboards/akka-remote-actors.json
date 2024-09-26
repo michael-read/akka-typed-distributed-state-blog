@@ -1,0 +1,484 @@
+{
+  "id": null,
+  "title": "Akka Remote Actors",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": true,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "title": "",
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Remote Messages Sent: 1 min",
+          "description": "",
+          "type": "timeseries",
+          "id": 1,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": "messages/second"
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ops",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "irate(akka_message_remote_sent_messages{host=~\"$Servers\", application=~\"$Applications\", actor_system=~\"$ActorSystems\", dispatcher=~\"$Dispatchers\", actor=~\"$RemoteActors\", message=~\"$Messages\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{dispatcher}} / {{actor}} / {{message}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Remote Messages Received: 1 min",
+          "description": "",
+          "type": "timeseries",
+          "id": 2,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": "messages/second"
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ops",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "irate(akka_message_remote_received_messages{host=~\"$Servers\", application=~\"$Applications\", actor_system=~\"$ActorSystems\", dispatcher=~\"$Dispatchers\", actor=~\"$RemoteActors\", message=~\"$Messages\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{dispatcher}} / {{actor}} / {{message}}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "",
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Remote Sent Message Size ($Quantile quantile)",
+          "description": "Note: message size includes payload size plus Akka / Telemetry metadata size.",
+          "type": "timeseries",
+          "id": 5,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": ""
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "bytes",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "akka_message_remote_sent_message_size{host=~\"$Servers\", application=~\"$Applications\", actor_system=~\"$ActorSystems\", dispatcher=~\"$Dispatchers\", actor=~\"$RemoteActors\", message=~\"$Messages\", quantile=~\"$Quantile\"}",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{dispatcher}} / {{actor}} / {{message}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Remote Received Message Size ($Quantile quantile)",
+          "description": "Note: message size includes payload size plus Akka / Telemetry metadata size.",
+          "type": "timeseries",
+          "id": 3,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": ""
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "bytes",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "akka_message_remote_received_message_size{host=~\"$Servers\", application=~\"$Applications\", actor_system=~\"$ActorSystems\", dispatcher=~\"$Dispatchers\", actor=~\"$RemoteActors\", message=~\"$Messages\", quantile=~\"$Quantile\"}",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{dispatcher}} / {{actor}} / {{message}}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "",
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Remote Serialization Time ($Quantile quantile)",
+          "description": "Statistics for the time that serialization takes.",
+          "type": "timeseries",
+          "id": 6,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": ""
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ns",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "akka_message_remote_serialization_time_ns{host=~\"$Servers\", application=~\"$Applications\", actor_system=~\"$ActorSystems\", dispatcher=~\"$Dispatchers\", actor=~\"$RemoteActors\", message=~\"$Messages\", quantile=~\"$Quantile\"}",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{dispatcher}} / {{actor}} / {{message}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Remote Deserialization Time ($Quantile quantile)",
+          "description": "Statistics for the time that deserialization takes.",
+          "type": "timeseries",
+          "id": 4,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": ""
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ns",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "akka_message_remote_deserialization_time_ns{host=~\"$Servers\", application=~\"$Applications\", actor_system=~\"$ActorSystems\", dispatcher=~\"$Dispatchers\", actor=~\"$RemoteActors\", message=~\"$Messages\", quantile=~\"$Quantile\"}",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{dispatcher}} / {{actor}} / {{message}}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+},
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+},
+  "templating": {
+    "list": [
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Applications",
+          "options": [],
+          "query": "label_values(application)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Servers",
+          "options": [],
+          "query": "label_values(akka_actor_running_actors{application=~\"$Applications\"}, host)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "ActorSystems",
+          "options": [],
+          "query": "label_values(akka_actor_running_actors{host=~\"$Servers\", application=~\"$Applications\"}, actor_system)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Dispatchers",
+          "options": [],
+          "query": "label_values(akka_actor_running_actors{host=~\"$Servers\", application=~\"$Applications\", actor_system=~\"$ActorSystems\"}, dispatcher)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "RemoteActors",
+          "options": [],
+          "query": "label_values(akka_actor_running_actors{host=~\"$Servers\", application=~\"$Applications\", actor_system=~\"$ActorSystems\", dispatcher=~\"$Dispatchers\"}, actor)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Messages",
+          "options": [],
+          "query": "label_values(akka_message_remote_sent_message_size{host=~\"$Servers\", application=~\"$Applications\", actor_system=~\"$ActorSystems\", dispatcher=~\"$Dispatchers\", actor=~\"$RemoteActors\"}, message)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": false,
+          "allValue": ".*",
+          "multi": false,
+          "name": "Quantile",
+          "options": [],
+          "query": "label_values(akka_message_remote_sent_message_size, quantile)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      }
+    ]
+  },
+  "annotations": {
+  "list": []
+  },
+  "refresh": false,
+  "schemaVersion": 12,
+  "version": 3,
+  "links": [],
+  "gnetId": null
+}

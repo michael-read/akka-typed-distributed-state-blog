@@ -1,0 +1,16 @@
+grafana:
+  sidecar:
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      searchNamespace: ALL
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      searchNamespace: ALL
+  ingress:
+    enabled: true
+    annotations:
+      spec.ingressClassName : nginx
+    hosts:
+      - mk.local # add this to your /etc/hosts file with the actual "minikube ip"

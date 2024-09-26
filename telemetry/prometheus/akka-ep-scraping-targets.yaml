@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: artifact-state-ep-scraping
+  labels:
+    app.kubernetes.io/instance: prometheus-operator
+    release: prometheus-operator
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: ""
+spec:
+  selector:
+    matchLabels:
+      app: ArtifactStateEndpoint
+  podMetricsEndpoints:
+    - port: node-metrics
