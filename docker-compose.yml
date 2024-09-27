@@ -24,6 +24,8 @@ services:
     image: akka-typed-blog-distributed-state/cluster:1.2.0
     deploy:
       replicas: 3
+    ports:
+      - 8558-8567:8558  # akka-mgmt
     links:
     - cassandra-db
 #    depends_on:
