@@ -1,0 +1,22 @@
+#!/bin/sh
+kubectl -n monitoring delete cm akka-actors
+kubectl -n monitoring delete cm akka-ask-pattern
+kubectl -n monitoring delete cm akka-circuit-breakers
+kubectl -n monitoring delete cm akka-cluster
+kubectl -n monitoring delete cm akka-cluster-sharding
+kubectl -n monitoring delete cm akka-dispatchers
+kubectl -n monitoring delete cm akka-events
+kubectl -n monitoring delete cm akka-http-clients
+kubectl -n monitoring delete cm akka-http-endpoints
+kubectl -n monitoring delete cm akka-http-servers
+kubectl -n monitoring delete cm akka-persistence
+kubectl -n monitoring delete cm akka-projections
+kubectl -n monitoring delete cm akka-remote-actors
+kubectl -n monitoring delete cm akka-remote-nodes
+kubectl -n monitoring delete cm akka-routers
+kubectl -n monitoring delete cm akka-stopwatches
+kubectl -n monitoring delete cm akka-streams-extended
+kubectl -n monitoring delete cm akka-streams
+kubectl -n monitoring delete cm java-futures
+kubectl -n monitoring delete cm jvm-metrics
+kubectl -n monitoring delete cm scala-futures

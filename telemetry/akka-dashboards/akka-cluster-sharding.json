@@ -1,0 +1,227 @@
+{
+  "id": null,
+  "title": "Akka Cluster Sharding",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": true,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "title": "",
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Shard per region",
+          "description": "",
+          "type": "timeseries",
+          "id": 1,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": ""
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "short",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "shard_region_shard_count_value{application=~\"$Applications\", host=~\"$Servers\", self_node=~\"$Nodes\", shard_region=~\"$Regions\"}",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{self_node}} / {{shard_region}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Shard entities per shard",
+          "description": "",
+          "type": "timeseries",
+          "id": 2,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": ""
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "short",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "shard_shard_entity_count_value{application=~\"$Applications\", host=~\"$Servers\", self_node=~\"$Nodes\", shard_region=~\"$Regions\"}",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{self_node}} / {{shard_region}} / {{shard}}"
+            }
+          ]
+        }
+      ],
+      "repeat": "Applications",
+      "title": "$Applications"
+    }
+  ],
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+},
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+},
+  "templating": {
+    "list": [
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Applications",
+          "options": [],
+          "query": "label_values(application)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Servers",
+          "options": [],
+          "query": "label_values(shard_region_shard_count_value{application=~\"$Applications\"}, host)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Nodes",
+          "options": [],
+          "query": "label_values(shard_region_shard_count_value{host=~\"$Servers\", application=~\"$Applications\"}, self_node)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Regions",
+          "options": [],
+          "query": "label_values(shard_region_shard_count_value{host=~\"$Servers\", application=~\"$Applications\", self_node=~\"$Nodes\"}, shard_region)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      }
+    ]
+  },
+  "annotations": {
+  "list": []
+  },
+  "refresh": false,
+  "schemaVersion": 12,
+  "version": 3,
+  "links": [],
+  "gnetId": null
+}

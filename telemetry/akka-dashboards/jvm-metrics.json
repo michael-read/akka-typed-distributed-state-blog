@@ -1,0 +1,598 @@
+{
+  "id": null,
+  "title": "JVM Metrics",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": true,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "title": "",
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Heap",
+          "description": "",
+          "type": "timeseries",
+          "id": 7,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "bytes",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "{__name__=~\"jvm_heap_.*\", host=~\"$Servers\", application=~\"$Applications\", __name__=~\"$HeapTypes\"}",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / {{__name__}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Non Heap",
+          "description": "",
+          "type": "timeseries",
+          "id": 6,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "bytes",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "{__name__=~\"jvm_non_heap_.*\", host=~\"$Servers\", application=~\"$Applications\", __name__=~\"$NonHeapTypes\"}",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / {{__name__}}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "",
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Total Heap",
+          "description": "",
+          "type": "timeseries",
+          "id": 4,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "bytes",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "{__name__=~\"jvm_total_.*\", host=~\"$Servers\", application=~\"$Applications\", __name__=~\"$TotalHeapTypes\"}",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / {{__name__}}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "",
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "GC Time",
+          "description": "",
+          "type": "timeseries",
+          "id": 2,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ms",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "idelta(jvm_PS_MarkSweep_time{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / PS_MarkSweep (old gen)"
+            },
+            {
+              "expr": "idelta(jvm_PS_Scavenge_time{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / PS_Scavenge (young gen)"
+            },
+            {
+              "expr": "idelta(jvm_MarkSweepCompact_time{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / MarkSweepCompact (old gen)"
+            },
+            {
+              "expr": "idelta(jvm_Copy_time{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / Copy (young gen)"
+            },
+            {
+              "expr": "idelta(jvm_G1_Old_Generation_time{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / G1_Old_Generation"
+            },
+            {
+              "expr": "idelta(jvm_G1_Young_Generation_time{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / G1_Young_Generation"
+            },
+            {
+              "expr": "idelta(jvm_ZGC_Cycles_time{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / ZGC Cycles Time"
+            },
+            {
+              "expr": "idelta(jvm_ZGC_Pauses_time{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / ZGC Pause Time"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "GC Count",
+          "description": "",
+          "type": "timeseries",
+          "id": 3,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "short",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "idelta(jvm_PS_MarkSweep_count{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / PS_MarkSweep (old gen)"
+            },
+            {
+              "expr": "idelta(jvm_PS_Scavenge_count{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / PS_Scavenge (young gen)"
+            },
+            {
+              "expr": "idelta(jvm_MarkSweepCompact_count{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / MarkSweepCompact (old gen)"
+            },
+            {
+              "expr": "idelta(jvm_Copy_count{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / Copy (young gen)"
+            },
+            {
+              "expr": "idelta(jvm_G1_Old_Generation_count{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / G1_Old_Generation"
+            },
+            {
+              "expr": "idelta(jvm_G1_Young_Generation_count{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / G1_Young_Generation"
+            },
+            {
+              "expr": "idelta(jvm_ZGC_Cycles_count{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / ZGC Cycles Count"
+            },
+            {
+              "expr": "idelta(jvm_ZGC_Pauses_count{application=~\"$Applications\", host=~\"$Servers\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / ZGC Pauses Count"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "",
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Memory Pools",
+          "description": "",
+          "type": "timeseries",
+          "id": 5,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "bytes",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "{__name__=~\"jvm_pools_.*\", host=~\"$Servers\", application=~\"$Applications\", __name__=~\"$MemoryPools\"}",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / {{__name__}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Class Loading",
+          "description": "",
+          "type": "timeseries",
+          "id": 1,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "short",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "jvm_loaded{application=~\"$Applications\", host=~\"$Servers\"}",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / loaded"
+            },
+            {
+              "expr": "jvm_unloaded{application=~\"$Applications\", host=~\"$Servers\"}",
+              "format": "time_series",
+              "legendFormat": "{{application}} / {{host}} / unloaded"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+},
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+},
+  "templating": {
+    "list": [
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Applications",
+          "options": [],
+          "query": "label_values(application)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Servers",
+          "options": [],
+          "query": "label_values(jvm_heap_committed{application=~\"$Applications\"}, host)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "HeapTypes",
+          "options": [],
+          "query": "label_values({__name__=~\"jvm_heap_.*\"},__name__)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "NonHeapTypes",
+          "options": [],
+          "query": "label_values({__name__=~\"jvm_non_heap_.*\"},__name__)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "TotalHeapTypes",
+          "options": [],
+          "query": "label_values({__name__=~\"jvm_total_.*\"},__name__)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "MemoryPools",
+          "options": [],
+          "query": "label_values({__name__=~\"jvm_pools_.*\"},__name__)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      }
+    ]
+  },
+  "annotations": {
+  "list": []
+  },
+  "refresh": false,
+  "schemaVersion": 12,
+  "version": 3,
+  "links": [],
+  "gnetId": null
+}

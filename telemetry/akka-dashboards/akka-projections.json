@@ -1,0 +1,772 @@
+{
+  "id": null,
+  "title": "Akka Projections",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": true,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "title": "",
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Envelopes successfully processed",
+          "description": "The number of times envelope handlers have successfully run.",
+          "type": "timeseries",
+          "id": 13,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": "envelopes/second"
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ops",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "irate(akka_projection_projection_handler_success{host=~\"$Servers\", application=~\"$Applications\", key=~\"$Keys\", projection=~\"$Projections\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{projection}} / {{key}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Envelopes successfully processed (per projection)",
+          "description": "The number of times envelope handlers have successfully run, grouped by projection name.",
+          "type": "timeseries",
+          "id": 8,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "none",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "sum(irate(akka_projection_projection_handler_success{host=~\"$Servers\", application=~\"$Applications\", projection=~\"$Projections\"}[1m])) by (projection)",
+              "format": "time_series",
+              "legendFormat": "{{projection}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Envelopes marked as processed",
+          "description": "The number of envelopes marked as processed after handling.",
+          "type": "timeseries",
+          "id": 7,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": "envelopes/second"
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ops",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "irate(akka_projection_projection_offset_success{host=~\"$Servers\", application=~\"$Applications\", key=~\"$Keys\", projection=~\"$Projections\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{projection}} / {{key}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Envelopes marked as processed (per projection)",
+          "description": "The number of envelopes marked as processed after handling, grouped by projection name.",
+          "type": "timeseries",
+          "id": 2,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "none",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "sum(irate(akka_projection_projection_offset_success{host=~\"$Servers\", application=~\"$Applications\", projection=~\"$Projections\"}[1m])) by (projection)",
+              "format": "time_series",
+              "legendFormat": "{{projection}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Envelope handler errors",
+          "description": "The number of errors encountered during envelope processing.",
+          "type": "timeseries",
+          "id": 5,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": "errors/second"
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ops",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "irate(akka_projection_projection_handler_error{host=~\"$Servers\", application=~\"$Applications\", key=~\"$Keys\", projection=~\"$Projections\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{projection}} / {{key}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Envelope handler errors (per projection)",
+          "description": "The number of errors encountered during envelope processing, grouped by projection name.",
+          "type": "timeseries",
+          "id": 12,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "none",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "sum(irate(akka_projection_projection_handler_error{host=~\"$Servers\", application=~\"$Applications\", key=~\"$Keys\", projection=~\"$Projections\"}[1m])) by (projection)",
+              "format": "time_series",
+              "legendFormat": "{{projection}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Running projection count",
+          "description": "The number of instances of projections running. If you run a sharded projection the counter will indicate the number of shards.",
+          "type": "timeseries",
+          "id": 4,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "none",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "akka_projection_projection_projection_count{host=~\"$Servers\", application=~\"$Applications\", key=~\"$Keys\", projection=~\"$Projections\"}",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{projection}} / {{key}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Running projection count (per projection)",
+          "description": "The number of instances of projections running, grouped by projection name. If you run a sharded projection the counter will indicate the number of shards.",
+          "type": "timeseries",
+          "id": 9,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "none",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "sum(akka_projection_projection_projection_count{host=~\"$Servers\", application=~\"$Applications\", key=~\"$Keys\", projection=~\"$Projections\"}) by (projection)",
+              "format": "time_series",
+              "legendFormat": "{{projection}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Projection failures",
+          "description": "The number of failures for running projections, each failure restarts processing.",
+          "type": "timeseries",
+          "id": 1,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": "failures/second"
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ops",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "irate(akka_projection_projection_projection_failure{host=~\"$Servers\", application=~\"$Applications\", key=~\"$Keys\", projection=~\"$Projections\"}[1m])",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{projection}} / {{key}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Projection failures (per projection)",
+          "description": "The number of failures for running projections, grouped by projection name. Each failure restarts processing.",
+          "type": "timeseries",
+          "id": 10,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "none",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "sum(irate(akka_projection_projection_projection_failure{host=~\"$Servers\", application=~\"$Applications\", key=~\"$Keys\", projection=~\"$Projections\"}[1m])) by (projection)",
+              "format": "time_series",
+              "legendFormat": "{{projection}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Residence time (ms) ($Quantile quantile)",
+          "description": "The time (in milliseconds) spent since the creation of the envelope until its offset was committed.",
+          "type": "timeseries",
+          "id": 11,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ms",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "akka_projection_projection_residence_time{host=~\"$Servers\", application=~\"$Applications\", key=~\"$Keys\", projection=~\"$Projections\", quantile=~\"$Quantile\"}",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{projection}} / {{key}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Service time (ns) ($Quantile quantile)",
+          "description": "The time (in nanoseconds) from the instant the envelope was considered ready until the projected data was available for reading. Note this time doesn’t include the period until data being readable and the offset being committed. As a consequence, when using at-least-once semantics, this metric will be reported for every envelope handler completing successfully (even if storing the offset failed and the envelope is retried)",
+          "type": "timeseries",
+          "id": 6,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ns",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "akka_projection_projection_service_time_ns{host=~\"$Servers\", application=~\"$Applications\", key=~\"$Keys\", projection=~\"$Projections\", quantile=~\"$Quantile\"}",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{projection}} / {{key}}"
+            }
+          ]
+        },
+        {
+          "datasource": "Cinnamon Prometheus",
+          "title": "Wait time (ms) ($Quantile quantile)",
+          "description": "The time (in milliseconds) an envelope spent on the queue/broker/journal. This is the time since the envelope was created until it was read, deserialized, and considered ready to be processed by the projection. This metric depends on the type of source since some sources don't provide the creation timestamp. At the same time, some producers record the creation time in the producing process, while others record the timestamp on the database/broker when accepting the envelope. Note this metric is affected by existing time skew between nodes on your infrastructure",
+          "type": "timeseries",
+          "id": 3,
+          "interval": "10s",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "stacking": {
+                  "mode": "none"
+                },
+                "axisPlacement": "auto",
+                "axisLabel": null
+              },
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "ms",
+              "min": 0,
+              "max": null
+            }
+          },
+          "options": {
+            "legend": {
+              "showLegend": false
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "span": 6,
+          "targets": [
+            {
+              "expr": "akka_projection_projection_wait_time{host=~\"$Servers\", application=~\"$Applications\", key=~\"$Keys\", projection=~\"$Projections\", quantile=~\"$Quantile\"}",
+              "format": "time_series",
+              "legendFormat": "{{host}} / {{projection}} / {{key}}"
+            }
+          ]
+        }
+      ],
+      "repeat": "Applications",
+      "title": "$Applications"
+    }
+  ],
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+},
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+},
+  "templating": {
+    "list": [
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Applications",
+          "options": [],
+          "query": "label_values(akka_projection_projection_residence_time, application)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Servers",
+          "options": [],
+          "query": "label_values(akka_projection_projection_residence_time{application=~\"$Applications\"}, host)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Projections",
+          "options": [],
+          "query": "label_values(akka_projection_projection_residence_time{application=~\"$Applications\", host=~\"$Servers\"}, projection)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": true,
+          "allValue": ".*",
+          "multi": true,
+          "name": "Keys",
+          "options": [],
+          "query": "label_values(akka_projection_projection_residence_time{application=~\"$Applications\", host=~\"$Servers\"}, key)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      },
+      {
+          "current": {},
+          "datasource": "Cinnamon Prometheus",
+          "hide": 0,
+          "includeAll": false,
+          "allValue": ".*",
+          "multi": false,
+          "name": "Quantile",
+          "options": [],
+          "query": "label_values(akka_projection_projection_residence_time, quantile)",
+          "refresh": 2,
+          "regex": "",
+          "tagValuesQuery": "",
+          "tagsQuery": "name",
+          "type": "query",
+          "useTags": false
+      }
+    ]
+  },
+  "annotations": {
+  "list": []
+  },
+  "refresh": false,
+  "schemaVersion": 12,
+  "version": 3,
+  "links": [],
+  "gnetId": null
+}

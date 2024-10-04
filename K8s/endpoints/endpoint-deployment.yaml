@@ -6,13 +6,14 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: endpoint
+      app: ArtifactStateEndpoint
+      tag: endpoint
   strategy: {}
   template:
     metadata:
       creationTimestamp: null
       labels:
-        app: endpoint
+        app: ArtifactStateEndpoint
         tag: endpoint
       annotations:
         prometheus.io/scrape: 'true'
@@ -22,7 +23,7 @@ spec:
       - env:
         - name: JAVA_OPTS
           value: "-Dconfig.resource=endpoint-application-k8s.conf"
-        image: akka-typed-blog-distributed-state/cluster:0.1.2
+        image: akka-typed-blog-distributed-state/cluster:1.2.0
         #health
         readinessProbe:
           httpGet:
