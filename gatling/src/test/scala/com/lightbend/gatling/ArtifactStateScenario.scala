@@ -78,8 +78,9 @@ class ArtifactStateScenario
   setUp(
 //    scn.inject(atOnceUsers(1))
 //    scn.inject(rampUsers(100) during (3 minutes))
-//    scn.inject(rampUsers(1000) during (5 minutes))
+    scn.inject(rampUsers(1000) during (5 minutes))
 // simulation set up -> -> https://docs.gatling.io/reference/script/core/injection/#open-model
+/*
 
     scn.inject(
       nothingFor(4 seconds), // 1
@@ -91,6 +92,7 @@ class ArtifactStateScenario
       rampUsersPerSec(100) to 20 during (10 minutes) randomized, // 7
       stressPeakUsers(1000).during(20 seconds) // 8
     )
+*/
     .protocols(httpConf)
   )
 }
